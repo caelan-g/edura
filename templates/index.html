@@ -1,0 +1,16 @@
+{% extends "layouts/layout_base.html" %} {% block body %}
+<div class="text-5xl font-bold my-12">Landing page!!</div>
+<a href="/login" class="bg-gray-800 rounded-md p-3 font-bold text-white"
+  >Login</a
+>
+<a
+  href="{{ url_for('register', user_type='student') }}"
+  class="bg-blue-800 rounded-md p-3 font-bold text-white"
+  >Register Student</a
+>
+<a
+  href="{{ url_for('register', user_type='teacher') }}"
+  class="bg-yellow-800 rounded-md p-3 font-bold text-white"
+  >Register Teacher</a
+>
+{% endblock %}

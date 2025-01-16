@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>To Do List App</title>
+  </head>
+  <body class="flex flex-row">
+    <div class="bg-gray-800 text-white font-bold p-2 flex flex-col gap-12 w-24">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/dashboard">only for teachers</a>
+      <a href="/dashboard">only for students</a>
+      <a href="/">logout</a>
+    </div>
+    <div class="grow">
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %}
+      <div class="w-1/4 font-bold text-gray-800 mx-auto fixed top-18">
+        {% for category, message in messages %} {% if category == 'success' %}
+        <div class="bg-green-100 p-2 rounded-md border border-green-200">
+          {{message}}
+        </div>
+        {% else %}
+        <div class="bg-red-100 p-2 rounded-md border border-red-200">
+          {{message}}
+        </div>
+        {% endif %} {% endfor %}
+      </div>
+      {% endif %} {% endwith %}
+      <div>{% block body %} {% endblock %}</div>
+    </div>
+  </body>
+</html>
