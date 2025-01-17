@@ -1,3 +1,84 @@
 {% extends "layouts/layout_user.html" %} {% block body %}
-<div class="text-5xl font-bold">Dashboard</div>
-{% endblock %}
+<div class="text-5xl font-bold">{{session['name']}}'s Dashboard</div>
+
+<!---->
+{% if session['user_type'] == 'student' %}
+<div class="text-3xl font-bold">Join Class</div>
+<form action="/join_class" method="post">
+  <div class="flex flex-row gap-2 my-2">
+    <input
+      class="bg-gray-100 p-2 rounded-md"
+      autocomplete="off"
+      name="class_id"
+      placeholder="Class ID"
+      type="text"
+    />
+    <button
+      type="submit"
+      class="bg-gray-800 p-2 font-bold text-xl text-white rounded-md"
+    >
+      Join
+    </button>
+  </div>
+</form>
+<div class="group transition-all">
+  <div class="text-2xl font-bold">Timer</div>
+  <div
+    class="opacity-100 group-hover:opacity-100 flex flex-col gap-2 transition-all border rounded-md p-2"
+  >
+    {% for class in classes %}
+    <a
+      href="{{ url_for('add_study', class_id=class[0]) }}"
+      class="p-2 font-bold text-md rounded-md bg-green-200"
+      >{{class[1]}}</a
+    >
+    {% endfor %}
+  </div>
+</div>
+
+<!---->
+{% else %}
+<div class="text-3xl font-bold">Your Classes</div>
+<div class="grid grid-cols-4 gap-4">
+  {% for class in classes %}
+  <div class="flex flex-col font-bold rounded-md bg-green-200 p-8">
+    <div class="font-bold text-2xl row-span-1 col-span-1">{{class[1]}}</div>
+  </div>
+  {% endfor %}
+  <a href="" class="flex flex-row font-bold rounded-md bg-gray-200 p-8">
+    <div class="font-bold text-2xl row-span-1 col-span-1 hidden">
+      Create Class
+    </div>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+      class="size-8"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+      />
+    </svg>
+  </a>
+</div>
+<form action="/create_class" method="post">
+  <button
+    type="submit"
+    class="bg-gray-800 p-2 font-bold text-xl text-white rounded-md"
+  >
+    Create Class
+  </button>
+  <input
+    class="bg-gray-100 p-2 rounded-md"
+    autocomplete="off"
+    name="class_name"
+    placeholder="Class Name"
+    type="text"
+  />
+</form>
+
+{% endif %} {% endblock %}
