@@ -1,12 +1,11 @@
 from datetime import datetime
 import sqlite3
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, session, flash, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
-
-app = Flask(__name__)
-app.secret_key = os.getenv("APP_SECRET_KEY")
+import random
+import time
 
 def init_db():
     conn = sqlite3.connect('study_app.db')
@@ -32,14 +31,15 @@ def init_db():
         class_id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         teacher_id INTEGER NOT NULL,
+        join_code INTEGER UNIQUE,
         FOREIGN KEY (teacher_id) REFERENCES teachers(teacher_id)
         )
         ''')
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS classes_students( 
-        class_id INTEGER,
-        student_id INTEGER,
-        study_time INTEGER,
+        class_id INTEGER NOT NULL,
+        student_id INTEGER NOT NULL,
+        study_time INTEGER NOT NULL,
         PRIMARY KEY (class_id, student_id),
         FOREIGN KEY (class_id) REFERENCES Classes(class_id),
         FOREIGN KEY (student_id) REFERENCES Students(student_id)  
@@ -48,8 +48,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
-
 def find_duplicate(cursor, username): #do i need this function?? - could it be used to find duplicate class codes or something?
     cursor.execute("SELECT COUNT(*) FROM students WHERE username = ?", (username,))
     student_count = cursor.fetchone()[0]
@@ -57,6 +55,53 @@ def find_duplicate(cursor, username): #do i need this function?? - could it be u
     teacher_count = cursor.fetchone()[0]
     if student_count > 0 or teacher_count > 0:
         return True
+    
+def generate_join_code(class_id):
+    join_code = ''
+    for i in range(0, 6, 1):
+        join_code += str(random.randint(0,9))
+    conn = sqlite3.connect('study_app.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT join_code FROM classes")
+    existing_join_code = str(cursor.fetchall()) #kinda bad but works
+    while join_code in existing_join_code:
+        join_code = ''
+        for i in range(0, 6, 1):
+            join_code += str(random.randint(0,9))
+        
+    cursor.execute("UPDATE classes SET join_code = ? WHERE class_id = ?", (join_code, class_id))
+    conn.commit()
+    conn.close()
+    return join_code
+
+def add_student(conn, cursor, student_id, class_id):
+    cursor.execute("SELECT COUNT(*) FROM classes_students WHERE (class_id, student_id) = (?, ?)", (class_id, student_id))
+    class_duplicate = cursor.fetchone()[0]
+    if class_duplicate > 0:
+        conn.close()
+        flash("Already in class", 'error')
+        return redirect('/dashboard')
+    else:
+        cursor.execute("INSERT INTO classes_students (class_id, student_id, study_time) VALUES (?, ?, ?)", (class_id, student_id, 0))
+        conn.commit()
+        conn.close()
+        flash('Class joined successfully', 'success')
+        return redirect('/dashboard')
+
+def auth_teacher(teacher_id, class_id):
+    conn = sqlite3.connect('study_app.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT teacher_id FROM classes WHERE class_id = ?", (class_id,))
+    required_teacher_id = cursor.fetchone()[0]
+    conn.close()
+    if teacher_id == required_teacher_id:
+        return True
+    else:
+        return False
+
+app = Flask(__name__)
+app.secret_key = os.getenv("APP_SECRET_KEY")
+init_db()
 
 @app.route('/')
 def index():
@@ -81,7 +126,7 @@ def register():
                 conn.close()
                 return redirect('/login')
             else:
-                cursor.execute("INSERT INTO students (username, password, name, study_time) VALUES (?, ?, ?, 0)", (username, hashed_password, name))
+                cursor.execute("INSERT INTO students (username, password, name) VALUES (?, ?, ?)", (username, hashed_password, name))
                 conn.commit()
                 flash('Registration successful. Please login', 'success')
                 conn.close()
@@ -161,26 +206,152 @@ def create_class():
         flash('Class created successfully', 'success')
         return redirect('/dashboard')
 
-@app.route('/add_study', methods=["POST"])
-def add_study(class_id):
-    print(class_id)
+@app.route('/add_study', methods=["GET", "POST"])
+def add_study():
+    class_id = request.args.get('class_id')
+    user_id = session['user_id']
+    conn = sqlite3.connect('study_app.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+    SELECT classes_students.study_time 
+        FROM classes_students 
+        WHERE student_id = ?
+        AND class_id = ?''', (user_id, class_id))
+    study_time = int(cursor.fetchone()[0])
+    conn.close()
+    new_study_time = 10 #time studeis (update)
+    study_time += new_study_time
+    #if method post
+    conn = sqlite3.connect('study_app.db')
+    cursor = conn.cursor()
+    cursor.execute("UPDATE classes_students SET study_time = ? WHERE (class_id, student_id) = (?, ?)", (study_time, class_id, user_id))
+    conn.commit()
+    conn.close()
+    #end if
+    flash(f'Nice job! Study time updated to {study_time} minutes', 'success')
     return redirect('/dashboard')
 
-@app.route('/join_class', methods=["POST"])
-def join_class():
-    class_id = request.form.get("class_id")
+@app.route('/join_code', methods=["GET", "POST"])
+def join_code():
+    join_code = request.form.get("join_code")
     student_id = session['user_id']
     conn = sqlite3.connect('study_app.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM classes WHERE class_id = ?", (class_id,))
+    cursor.execute("SELECT COUNT(*) FROM classes WHERE join_code = ?", (join_code,))
+    print(join_code)
     class_count = cursor.fetchone()[0]
     if class_count == 0:
         flash("We couldn't find the class you were looking for", 'error')
         return redirect('/dashboard')
     else:
-        cursor.execute("INSERT INTO classes_students (class_id, student_id) VALUES (?, ?)", (class_id, student_id))
+        cursor.execute("SELECT class_id FROM classes WHERE join_code = ?", (join_code,))
+        class_id = cursor.fetchone()[0]
+        add_student(conn, cursor, student_id, class_id)
+        return redirect('/dashboard')
+        
+    
+@app.route('/view_class/<int:class_id>', methods=['GET', 'POST'])
+def view_class(class_id):
+    join_code = generate_join_code(class_id)
+    conn = sqlite3.connect('study_app.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM classes WHERE class_id = ?", (class_id,))
+    class_entity = cursor.fetchone()
+    conn.close()
+    if session['user_type'] == 'teacher':
+        if class_entity:
+            if auth_teacher(session['user_id'], class_id):
+                conn = sqlite3.connect('study_app.db')
+                cursor = conn.cursor()
+                cursor.execute('''
+                SELECT students.student_id, students.name, classes_students.study_time
+                    FROM students
+                    JOIN classes_students ON students.student_id = classes_students.student_id
+                    JOIN classes ON classes.class_id = classes_students.class_id
+                    WHERE classes.class_id = ?
+                    ''', (class_id,))
+                class_data = cursor.fetchall()
+                conn.close()
+                
+                total = 0
+                sum = 0
+                for row in class_data:
+                    total += int(row[2])
+                    sum += 1
+                if total > 0:
+                    average_study_time = round(total/sum, 1)
+                else:
+                    average_study_time = 0
+                print(f'class id is: {class_entity[0]}')
+                return render_template('view-class.html', class_data=class_data, class_entity=class_entity, average_study_time=average_study_time, join_code=join_code)
+            else:
+                flash('You are not the owner of this class', 'error')
+                return redirect('/dashboard')
+        else:
+            flash('Class does not exist')
+            return redirect('/dashboard')
+    else:
+        flash('Please login to continue')
+        return redirect('/')
+    
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('You have been logged out', 'success')
+    return redirect('/')
+    
+@app.route('/settings', methods=['GET'])
+def settings():
+    return render_template('settings.html')
+    
+@app.route('/update_class', methods=['POST'])
+def update_class():
+    edit_class_id = int(request.form.get("class_id"))
+    new_class_name = request.form.get("class_name")
+    if new_class_name:
+        conn = sqlite3.connect('study_app.db')
+        cursor = conn.cursor()
+        cursor.execute("UPDATE classes SET name = ? WHERE class_id = ?", (new_class_name, edit_class_id))
         conn.commit()
         conn.close()
-        flash('Class joined successfully', 'success')
+    else:
+        flash('Please input a name', 'error')
+    return redirect('/dashboard')
+
+@app.route('/delete_class/<int:class_id>', methods=['POST'])
+def delete_class(class_id):
+    if session['user_type'] == 'teacher' and auth_teacher(session['user_id'], class_id):
+        conn = sqlite3.connect('study_app.db')
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM classes WHERE class_id = ?", (class_id,))
+        cursor.execute("DELETE FROM classes_students WHERE class_id = ?", (class_id,))
+        conn.commit()
+        conn.close()
+        flash('Class deleted', 'success')
+        return redirect('/dashboard') #bug here - doens't show on first reload due to js
+    else:
+        flash('You are not the owner of this class', 'error')
         return redirect('/dashboard')
-    
+
+@app.route('/reload_join_code', methods=['POST'])
+def reload_join_code():
+    generate_join_code()
+    return render_template('view_class')
+
+@app.route('/invite_student', methods=['GET', 'POST'])
+def invite_student():
+    student_username = request.form.get('student_username')
+    class_id = request.form.get("class_id")
+    print(f'id is {class_id}')
+    conn = sqlite3.connect('study_app.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT student_id FROM students WHERE username = ?', (student_username,))
+    student_id = cursor.fetchone()
+    if student_id:
+        student_id = student_id[0]
+        add_student(conn, cursor, student_id, class_id)
+        return redirect(url_for('view_class', class_id=class_id))
+    else:      
+        flash('Student not found', 'error')
+        conn.close()
+        return redirect(url_for('view_class', class_id=class_id))

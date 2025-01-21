@@ -3,82 +3,245 @@
 
 <!---->
 {% if session['user_type'] == 'student' %}
-<div class="text-3xl font-bold">Join Class</div>
-<form action="/join_class" method="post">
-  <div class="flex flex-row gap-2 my-2">
-    <input
-      class="bg-gray-100 p-2 rounded-md"
-      autocomplete="off"
-      name="class_id"
-      placeholder="Class ID"
-      type="text"
-    />
-    <button
-      type="submit"
-      class="bg-gray-800 p-2 font-bold text-xl text-white rounded-md"
-    >
-      Join
-    </button>
-  </div>
-</form>
-<div class="group transition-all">
-  <div class="text-2xl font-bold">Timer</div>
-  <div
-    class="opacity-100 group-hover:opacity-100 flex flex-col gap-2 transition-all border rounded-md p-2"
-  >
-    {% for class in classes %}
-    <a
-      href="{{ url_for('add_study', class_id=class[0]) }}"
-      class="p-2 font-bold text-md rounded-md bg-green-200"
-      >{{class[1]}}</a
-    >
-    {% endfor %}
-  </div>
+<div>
+  <div class="text-3xl font-bold">Join Class</div>
+  <form action="/join_code" method="post">
+    <div class="flex flex-row gap-2 my-2">
+      <input
+        class="text-4xl font-bold bg-gray-200 p-2 rounded-md"
+        autocomplete="off"
+        name="join_code"
+        placeholder="Class Code"
+        type="text"
+      />
+      <button
+        type="submit"
+        class="bg-gray-800 p-2 font-bold text-xl text-white rounded-md"
+      >
+        Join
+      </button>
+    </div>
+  </form>
 </div>
+
+<div class=""></div>
+<div class="">graphs here</div>
+<div class="text-4xl font-bold">My Classes</div>
+{% for class in classes %}
+<div
+  href=""
+  class="p-2 font-bold text-md bg-gray-100 text-black rounded-md my-1"
+>
+  {{class[1]}}
+</div>
+{% endfor %}
 
 <!---->
 {% else %}
-<div class="text-3xl font-bold">Your Classes</div>
-<div class="grid grid-cols-4 gap-4">
-  {% for class in classes %}
-  <div class="flex flex-col font-bold rounded-md bg-green-200 p-8">
-    <div class="font-bold text-2xl row-span-1 col-span-1">{{class[1]}}</div>
-  </div>
-  {% endfor %}
-  <a href="" class="flex flex-row font-bold rounded-md bg-gray-200 p-8">
-    <div class="font-bold text-2xl row-span-1 col-span-1 hidden">
-      Create Class
-    </div>
+<div
+  class="text-3xl font-bold flex flex-row w-full align-middle justify-between my-2"
+>
+  <div class="my-auto align-middle">My Classes</div>
+
+  <button
+    onclick="popup('class_popup')"
+    class="flex flex-row relative bg-gray-800 rounded-md p-2 text-white text-xl cursor-pointer"
+  >
+    Create Class
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
-      stroke-width="1.5"
+      stroke-width="2.5"
       stroke="currentColor"
-      class="size-8"
+      class="size-7 top-[.2rem]"
     >
       <path
         stroke-linecap="round"
         stroke-linejoin="round"
-        d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+        d="M12 4.5v15m7.5-7.5h-15"
       />
     </svg>
-  </a>
-</div>
-<form action="/create_class" method="post">
-  <button
-    type="submit"
-    class="bg-gray-800 p-2 font-bold text-xl text-white rounded-md"
-  >
-    Create Class
   </button>
-  <input
-    class="bg-gray-100 p-2 rounded-md"
-    autocomplete="off"
-    name="class_name"
-    placeholder="Class Name"
-    type="text"
-  />
-</form>
+</div>
+<div class="grid grid-cols-3 gap-6 w-full">
+  {% for class in classes %}
+  <a
+    href="{{ url_for('view_class', class_id=class[0]) }}"
+    class="class_link flex flex-col w-full h-40 col-span-1 row-span-1 rounded-md bg-gray-100 shadow-md hover:bg-gray-200 transition-all p-4"
+    data-original-url="{{ url_for('view_class', class_id=class[0]) }}"
+  >
+    <div class="flex flex-row gap-2 h-full w-full" onclick="event.stop">
+      <div class="flex flex-col justify-between">
+        <div
+          class="text-2xl h-20 w-20 font-bold text-white bg-green-200 rounded-md p-4"
+        ></div>
+        <div class="flex flex-row justify-between p-2">
+          <button class="" onclick="popup('edit_class_popup', {{class[0]}})">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="size-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
 
+      <div
+        class="font-bold text-xl row-span-1 col-span-1 text-ellipsis overflow-hidden text-left"
+      >
+        {{class[1]}}
+      </div>
+    </div>
+  </a>
+  <div
+    id="class_id_{{class[0]}}"
+    onclick="popup('edit_class_popup', {{class[0]}})"
+    class="opacity-0 transition-all fixed inset-0 bg-opacity-50 bg-black w-full h-full pointer-events-none flex justify-center scale-110"
+  >
+    <div
+      class="bg-white w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
+      onclick="event.stopPropagation()"
+    >
+      <form action="/update_class" method="post">
+        <div class="text-2xl font-bold">Edit Class</div>
+        <input type="hidden" name="class_id" value="{{class[0]}}" />
+        <input
+          type="text"
+          name="class_name"
+          value="{{class[1]}}"
+          class="my-6 bg-gray-100 p-2 rounded-md font-bold text-xl w-full"
+        />
+
+        <a
+          href="#"
+          onclick="deleteClass({{ class[0] }}); return false;"
+          class="bg-red-100 font-bold rounded-md p-2 flex flex-row cursor-pointer mb-2 w-full text-red-800"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            class="size-6 mr-1"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <div class="text-ellipsis overflow-hidden text-nowrap">
+            Delete "{{class[1]}}"?
+          </div>
+        </a>
+        <div class="flex flex-row gap-2">
+          <div
+            class="bg-gray-200 p-2 font-bold rounded-md cursor-pointer w-1/2 text-center"
+            onclick="popup('edit_class_popup')"
+          >
+            Cancel
+          </div>
+          <button
+            type="submit"
+            class="bg-gray-800 p-2 font-bold text-white rounded-md w-1/2 text-center"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<div
+  id="class_popup"
+  class="opacity-0 transition-all fixed inset-0 bg-opacity-50 bg-black w-full h-full pointer-events-none flex justify-center scale-110"
+  onclick="popup('class_popup')"
+>
+  <div
+    class="bg-white w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
+    onclick="event.stopPropagation()"
+  >
+    <form action="/create_class" method="post">
+      <div class="text-2xl font-bold">Create new class</div>
+      <input
+        class="bg-gray-100 p-2 rounded-md w-full my-6"
+        autocomplete="off"
+        name="class_name"
+        placeholder="Class Name e.g. Mr Jacque's Software"
+        type="text"
+      />
+      <div class="flex flex-row gap-2">
+        <div
+          class="bg-gray-200 p-2 font-bold rounded-md cursor-pointer w-1/2 text-center"
+          onclick="popup('class_popup')"
+        >
+          Cancel
+        </div>
+        <button
+          type="submit"
+          class="bg-gray-800 p-2 font-bold text-white rounded-md w-1/2 text-center"
+        >
+          Create Class
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Render the original URL via Jinja
+
+  function popup(popup_id, class_id) {
+    let popup;
+    if (popup_id == "edit_class_popup") {
+      popup = document.getElementById(`class_id_${class_id}`);
+      console.log(`class_id_${class_id}`);
+    } else {
+      popup = document.getElementById(popup_id);
+    }
+
+    if (popup.classList.contains("opacity-0")) {
+      popup.classList.add("opacity-100", "scale-100");
+      popup.classList.remove("opacity-0", "pointer-events-none", "scale-110");
+      if (popup_id == "edit_class_popup") {
+        toggleClassLink(true);
+      }
+    } else {
+      popup.classList.add("opacity-0", "pointer-events-none", "scale-110");
+      popup.classList.remove("opacity-100", "scale-100");
+      if (popup_id == "edit_class_popup") {
+        toggleClassLink(false);
+      }
+    }
+
+    function toggleClassLink(popup) {
+      const a = document.querySelectorAll(".class_link");
+      a.forEach((el) => {
+        let originalUrl = el.getAttribute("data-original-url");
+        if (popup) {
+          el.setAttribute("href", "#");
+        } else {
+          el.setAttribute("href", originalUrl);
+        }
+      });
+    }
+  }
+
+  function deleteClass(class_id) {
+    fetch(`/delete_class/${class_id}`, {
+      method: "POST",
+    });
+    location.reload();
+  }
+</script>
 {% endif %} {% endblock %}
