@@ -7,6 +7,14 @@ import os
 import random
 import time
 
+#TO DO LIST
+### session database
+### student timer feature
+### teacher ability to remove students
+### dashboard ui revamp for students
+### class view ui revamp for teachers
+### landing page revamp
+
 def init_db():
     conn = sqlite3.connect('study_app.db')
     cursor = conn.cursor()
@@ -39,12 +47,23 @@ def init_db():
     CREATE TABLE IF NOT EXISTS classes_students( 
         class_id INTEGER NOT NULL,
         student_id INTEGER NOT NULL,
-        study_time INTEGER NOT NULL,
+        total_study_time INTEGER NOT NULL,
         PRIMARY KEY (class_id, student_id),
-        FOREIGN KEY (class_id) REFERENCES Classes(class_id),
-        FOREIGN KEY (student_id) REFERENCES Students(student_id)  
+        FOREIGN KEY (class_id) REFERENCES classes(class_id),
+        FOREIGN KEY (student_id) REFERENCES students(student_id)  
         )
         ''') #have to make junction table here so it can have many to many relationship
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS study_sessions( 
+        session_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        class_id INTEGER NOT NULL,
+        student_id INTEGER NOT NULL,
+        start_time DATETIME NOT NULL,
+        end_time DATETIME NOT NULL,
+        description TEXT,
+        FOREIGN KEY (class_id, student_id) REFERENCES classes_students(class_id, student_id)  
+        )
+        ''')
     conn.commit()
     conn.close()
 
@@ -82,7 +101,7 @@ def add_student(conn, cursor, student_id, class_id):
         flash("Already in class", 'error')
         return redirect('/dashboard')
     else:
-        cursor.execute("INSERT INTO classes_students (class_id, student_id, study_time) VALUES (?, ?, ?)", (class_id, student_id, 0))
+        cursor.execute("INSERT INTO classes_students (class_id, student_id, total_study_time) VALUES (?, ?, ?)", (class_id, student_id, 0))
         conn.commit()
         conn.close()
         flash('Class joined successfully', 'success')
@@ -157,6 +176,7 @@ def login():
             session['username'] = student_record[1]
             session['name'] = student_record[3]
             session['user_type'] = 'student'
+            session['start_study_time'] = None
             flash('Login successful', 'success')
             return redirect('/dashboard')
         elif teacher_record and check_password_hash(teacher_record[2], password):
@@ -208,28 +228,37 @@ def create_class():
 
 @app.route('/add_study', methods=["GET", "POST"])
 def add_study():
+    start_study_time = session['start_study_time']
     class_id = request.args.get('class_id')
     user_id = session['user_id']
-    conn = sqlite3.connect('study_app.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-    SELECT classes_students.study_time 
-        FROM classes_students 
-        WHERE student_id = ?
-        AND class_id = ?''', (user_id, class_id))
-    study_time = int(cursor.fetchone()[0])
-    conn.close()
-    new_study_time = 10 #time studeis (update)
-    study_time += new_study_time
-    #if method post
-    conn = sqlite3.connect('study_app.db')
-    cursor = conn.cursor()
-    cursor.execute("UPDATE classes_students SET study_time = ? WHERE (class_id, student_id) = (?, ?)", (study_time, class_id, user_id))
-    conn.commit()
-    conn.close()
-    #end if
-    flash(f'Nice job! Study time updated to {study_time} minutes', 'success')
-    return redirect('/dashboard')
+    if start_study_time:
+        end_study_time = datetime.now().replace(tzinfo=None)
+        start_study_time = start_study_time.replace(tzinfo=None)
+        study_time = int((end_study_time - start_study_time).total_seconds())
+        description = 'test session' #request.form.get('description')
+        conn = sqlite3.connect('study_app.db')
+        cursor = conn.cursor()
+        cursor.execute('''
+        SELECT classes_students.total_study_time 
+            FROM classes_students 
+            WHERE student_id = ?
+            AND class_id = ?''', (user_id, class_id))
+        total_study_time = int(cursor.fetchone()[0])
+        total_study_time += study_time
+        cursor.execute("UPDATE classes_students SET total_study_time = ? WHERE (class_id, student_id) = (?, ?)", (total_study_time, class_id, user_id))
+        cursor.execute('''
+        INSERT INTO study_sessions (class_id, student_id, start_time, end_time, description)
+            VALUES (?, ?, ?, ?, ?)''', (class_id, user_id, start_study_time, end_study_time, description))
+        conn.commit()
+        conn.close()
+        flash(f'Nice job studying for {study_time} seconds! Study time updated to {total_study_time} seconds', 'success')
+        session['start_study_time'] = None
+        return redirect('/dashboard')
+    else:
+        session['study_time'] = 10
+        session['start_study_time'] = datetime.now().replace(tzinfo=None)
+        return redirect('/dashboard')
+    
 
 @app.route('/join_code', methods=["GET", "POST"])
 def join_code():
@@ -264,13 +293,15 @@ def view_class(class_id):
                 conn = sqlite3.connect('study_app.db')
                 cursor = conn.cursor()
                 cursor.execute('''
-                SELECT students.student_id, students.name, classes_students.study_time
+                SELECT students.student_id, students.name, classes_students.total_study_time
                     FROM students
                     JOIN classes_students ON students.student_id = classes_students.student_id
                     JOIN classes ON classes.class_id = classes_students.class_id
                     WHERE classes.class_id = ?
                     ''', (class_id,))
                 class_data = cursor.fetchall()
+                cursor.execute("SELECT * FROM study_sessions WHERE class_id = ? ORDER BY start_time DESC", (class_id,))
+                session_data = cursor.fetchall()
                 conn.close()
                 
                 total = 0
@@ -282,8 +313,7 @@ def view_class(class_id):
                     average_study_time = round(total/sum, 1)
                 else:
                     average_study_time = 0
-                print(f'class id is: {class_entity[0]}')
-                return render_template('view-class.html', class_data=class_data, class_entity=class_entity, average_study_time=average_study_time, join_code=join_code)
+                return render_template('view-class.html', class_data=class_data, class_entity=class_entity, average_study_time=average_study_time, join_code=join_code, session_data=session_data)
             else:
                 flash('You are not the owner of this class', 'error')
                 return redirect('/dashboard')

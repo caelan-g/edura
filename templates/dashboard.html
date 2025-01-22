@@ -23,8 +23,9 @@
     </div>
   </form>
 </div>
-
-<div class=""></div>
+{% if session['start_study_time'] %}
+<div class="text-4xl font-bold">Currently studying</div>
+{% endif %}
 <div class="">graphs here</div>
 <div class="text-4xl font-bold">My Classes</div>
 {% for class in classes %}
@@ -125,13 +126,13 @@
         <a
           href="#"
           onclick="deleteClass({{ class[0] }}); return false;"
-          class="bg-red-100 font-bold rounded-md p-2 flex flex-row cursor-pointer mb-2 w-full text-red-800"
+          class="bg-red-100 font-bold rounded-md py-2 px-auto flex flex-row justify-center cursor-pointer mb-2 w-full text-red-800"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
-            class="size-6 mr-1"
+            class="size-5 relative top-[.1rem] mr-1"
           >
             <path
               fill-rule="evenodd"
@@ -146,7 +147,7 @@
         <div class="flex flex-row gap-2">
           <div
             class="bg-gray-200 p-2 font-bold rounded-md cursor-pointer w-1/2 text-center"
-            onclick="popup('edit_class_popup')"
+            onclick="popup('edit_class_popup', {{class[0]}})"
           >
             Cancel
           </div>
