@@ -130,9 +130,12 @@
     <div class="text-4xl font-bold">Study Sessions</div>
     {% for session in session_data %}
     <div class="bg-gray-100 rounded-md p-4 flex flex-col shadow-md">
-      <div class="text-2xl font-bold">Student: {{session[2]}}</div>
+      <div class="text-2xl font-bold">{{session[2] | getStudentName}}</div>
       <div class="text-md">{{session[5]}}</div>
       <div class="text-md text-gray-500">{{session[3]}}</div>
+      <div class="text-md text-gray-500">
+        {{ session[3] | duration(session[4]) }}
+      </div>
     </div>
     {% endfor %}
   </div>

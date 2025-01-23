@@ -8,11 +8,8 @@ import random
 import time
 
 #TO DO LIST
-### session database
-### student timer feature
 ### teacher ability to remove students
 ### dashboard ui revamp for students
-### class view ui revamp for teachers
 ### landing page revamp
 
 def init_db():
@@ -122,6 +119,26 @@ app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET_KEY")
 init_db()
 
+@app.template_filter('duration')
+def duration_filter(start_time, end_time):
+    start_time = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    end_time = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S.%f")
+    hours = (end_time - start_time).total_seconds() / 3600
+    minutes = round((hours - round(hours, 0)) * 60, 0)
+    if hours > 1:
+        return f"{round(hours, 0)}h {str(minutes).replace(".0", "")}m"
+    else:
+        return f"{str(minutes).replace(".0", "")}m"
+    
+@app.template_filter('getStudentName')
+def get_student_name(student_id):
+    conn = sqlite3.connect('study_app.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT students.name FROM students WHERE student_id = ?", (student_id,))
+    student_name = cursor.fetchone()[0]
+    conn.close()
+    return student_name
+
 @app.route('/')
 def index():
     return render_template("index.html")
@@ -153,10 +170,8 @@ def register():
     user_type = request.args.get("user_type")
     if user_type == "teacher":
         session['user_type'] = 'teacher'
-        print("teacher")
     else:
         session['user_type'] = 'student'
-        print("student")
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -177,6 +192,10 @@ def login():
             session['name'] = student_record[3]
             session['user_type'] = 'student'
             session['start_study_time'] = None
+            session['study_class_id'] = None
+            session['timer_sec'] = 0
+            session['timer_min'] = 0
+            session['timer_hr'] = 0
             flash('Login successful', 'success')
             return redirect('/dashboard')
         elif teacher_record and check_password_hash(teacher_record[2], password):
@@ -229,9 +248,13 @@ def create_class():
 @app.route('/add_study', methods=["GET", "POST"])
 def add_study():
     start_study_time = session['start_study_time']
-    class_id = request.args.get('class_id')
     user_id = session['user_id']
     if start_study_time:
+        class_id = session['study_class_id']
+        session['study_class_id'] = None
+        session['timer_sec'] = 0
+        session['timer_min'] = 0
+        session['timer_hr'] = 0
         end_study_time = datetime.now().replace(tzinfo=None)
         start_study_time = start_study_time.replace(tzinfo=None)
         study_time = int((end_study_time - start_study_time).total_seconds())
@@ -255,8 +278,8 @@ def add_study():
         session['start_study_time'] = None
         return redirect('/dashboard')
     else:
-        session['study_time'] = 10
         session['start_study_time'] = datetime.now().replace(tzinfo=None)
+        session['study_class_id'] = request.args.get('class_id')
         return redirect('/dashboard')
     
 
@@ -362,6 +385,18 @@ def delete_class(class_id):
     else:
         flash('You are not the owner of this class', 'error')
         return redirect('/dashboard')
+
+@app.route('/update_session_timer', methods=['POST'])
+def update_session_timer():
+    data = request.get_json()
+    timer_sec = data.get('timer_sec')
+    timer_min = data.get('timer_min')
+    timer_hr = data.get('timer_hr')
+
+    session['timer_sec'] = timer_sec
+    session['timer_min'] = timer_min
+    session['timer_hr'] = timer_hr
+    return 'f'
 
 @app.route('/reload_join_code', methods=['POST'])
 def reload_join_code():
