@@ -251,6 +251,7 @@ def add_study():
     user_id = session['user_id']
     if start_study_time:
         class_id = session['study_class_id']
+        description = request.form.get('description')
         session['study_class_id'] = None
         session['timer_sec'] = 0
         session['timer_min'] = 0
@@ -258,7 +259,6 @@ def add_study():
         end_study_time = datetime.now().replace(tzinfo=None)
         start_study_time = start_study_time.replace(tzinfo=None)
         study_time = int((end_study_time - start_study_time).total_seconds())
-        description = 'test session' #request.form.get('description')
         conn = sqlite3.connect('study_app.db')
         cursor = conn.cursor()
         cursor.execute('''
@@ -355,7 +355,7 @@ def logout():
     
 @app.route('/settings', methods=['GET'])
 def settings():
-    return render_template('settings.html')
+    return render_template('/settings.html')
     
 @app.route('/update_class', methods=['POST'])
 def update_class():

@@ -13,7 +13,7 @@
   </head>
   <body class="flex flex-row">
     <nav
-      class="bg-gray-800 text-white font-bold p-4 flex flex-col align-middle h-full fixed w-44 py-24 gap-12"
+      class="bg-gray-800 text-white font-bold p-4 flex flex-col align-middle h-full fixed w-48 py-24 gap-12"
     >
       <div class="text-2xl">Study App</div>
       <div class="flex flex-col gap-10">
@@ -61,8 +61,7 @@
           </div>
           {% else %}
           <a
-            href="{{ url_for('add_study') }}"
-            onclick="stopTimer()"
+            onclick="stopTimer(), popup('session_popup')"
             class="font-bold rounded-full bg-blue-500 px-2 py-1 flex justify-between w-28 cursor-pointer relative left-[-.3rem]"
           >
             <svg
@@ -94,13 +93,13 @@
           </a>
           {% endif %}
           <div
-            class="z-50 opacity-0 pointer-events-none peer-hover:opacity-100 hover:pointer-events-auto hover:opacity-100 peer-hover:pointer-events-auto flex flex-col gap-2 transition-all border rounded-md p-2 bg-white absolute"
+            class="w-full z-50 opacity-0 pointer-events-none peer-hover:opacity-100 hover:pointer-events-auto hover:opacity-100 peer-hover:pointer-events-auto flex flex-col gap-2 transition-all border rounded-md p-2 bg-white absolute"
           >
             {% for class in classes %}
             <a
               href="{{ url_for('add_study', class_id=class[0]) }}"
               onclick="startTimer()"
-              class="p-2 font-bold text-xs text-green-500 text-black rounded-md bg-green-200"
+              class="p-2 font-bold text-xs text-green-500 rounded-md bg-green-200 text-ellipsis text-ellipsis overflow-hidden text-nowrap"
               >{{class[1]}}</a
             >
             {% endfor %}
@@ -218,8 +217,36 @@
       {% endif %} {% endfor %}
     </div>
     {% endif %} {% endwith %}
-    <div class="lg:mx-48 lg:my-12 mx-48 w-full">
+    <div class="lg:mx-52 lg:my-12 mx-48 w-full">
       {% block body %} {% endblock %}
+    </div>
+    <div
+      id="session_popup"
+      class="opacity-0 fixed transition-all fixed inset-0 bg-opacity-50 bg-black w-full h-full pointer-events-none flex justify-center scale-110"
+    >
+      <div
+        class="bg-white w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
+        onclick="event.stopPropagation()"
+      >
+        <form action="/add_study" method="post">
+          <div class="text-2xl font-bold">Log Study Session</div>
+          <input
+            class="bg-gray-100 p-2 rounded-md w-full my-6"
+            autocomplete="off"
+            name="description"
+            placeholder="Description"
+            type="text"
+          />
+          <div class="flex flex-row gap-2">
+            <button
+              type="submit"
+              class="bg-gray-800 p-2 font-bold text-white rounded-md w-full text-center"
+            >
+              Complete Study Session
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
     <script defer>
       let timer = false;
@@ -282,6 +309,21 @@
             }),
           });
           setTimeout(stopwatch, 1000);
+        }
+      }
+
+      function popup(popup_id) {
+        let popup = document.getElementById(popup_id);
+        if (popup.classList.contains("opacity-0")) {
+          popup.classList.add("opacity-100", "scale-100");
+          popup.classList.remove(
+            "opacity-0",
+            "pointer-events-none",
+            "scale-110"
+          );
+        } else {
+          popup.classList.add("opacity-0", "pointer-events-none", "scale-110");
+          popup.classList.remove("opacity-100", "scale-100");
         }
       }
     </script>
