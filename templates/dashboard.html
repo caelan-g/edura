@@ -1,27 +1,37 @@
 {% extends "layouts/layout_user.html" %} {% block body %}
-<div class="text-5xl font-bold">{{session['name']}}'s Dashboard</div>
+<div class="text-5xl font-bold mb-2">{{session['name']}}'s Dashboard</div>
 
 <!---->
 {% if session['user_type'] == 'student' %}
 <div class="flex flex-row gap-2">
   <div class="flex flex-col gap-2 grow">
-    <div class="text-4xl font-bold">Graphs</div>
-    <div class="bg-gray-100 lg:shadow-md p-4 w-full rounded-md h-96">
-      graphs here
+    <div
+      class="border bg-white border-gray-100 lg:shadow-md p-4 w-full rounded-md h-96"
+    >
+      {% if script %}
+      <div class="w-full h-full">{{ div|safe }}</div>
+      {{script|safe}} {% else %}
+      <div class="mx-auto my-auto text-center align-middle font-bold text-2xl">
+        Join a class to view your data
+      </div>
+      {% endif %}
     </div>
-    <div class="text-4xl font-bold">Other</div>
-    <div class="bg-gray-100 lg:shadow-md p-4 w-full rounded-md h-48">
-      something here
+
+    <div class="text-4xl font-bold hidden">Assignments</div>
+    <div
+      class="border bg-white border-gray-100 lg:shadow-md p-4 w-full rounded-md h-48"
+    >
+      Recent Sessions
     </div>
   </div>
 
   <div class="flex flex-col gap-2 w-96">
-    <div class="flex flex-col gap-2">
-      <div class="text-4xl font-bold">Classes</div>
+    <div class="rounded-md bg-white border border-gray-100 shadow-md px-4 py-4">
+      <div class="text-2xl font-bold">My Classes</div>
       <form action="/join_code" method="post">
         <div class="flex flex-row gap-2">
           <input
-            class="text-xl font-bold bg-gray-200 p-2 rounded-md grow"
+            class="text-lg font-bold bg-white border-gray-100 border px-2 grow rounded-md"
             autocomplete="off"
             name="join_code"
             placeholder="Class Code"
@@ -29,33 +39,33 @@
           />
           <button
             type="submit"
-            class="bg-gray-800 p-2 font-bold text-xl text-white rounded-md"
+            class="bg-gray-800 p-2 font-bold text-lg text-white rounded-md"
           >
             Join
           </button>
         </div>
       </form>
-    </div>
 
-    {% for class in classes %}
-    <div
-      class="class_link flex flex-col h-40 col-span-1 row-span-1 rounded-md bg-gray-100 shadow-md transition-all p-4 w-full"
-    >
-      <div class="flex flex-row gap-2 h-full w-full">
-        <div class="flex flex-col justify-between">
+      {% for class in classes %}
+      <div
+        class="class_link flex flex-col col-span-1 row-span-1 transition-all py-2 border-b last:border-0 border-gray-100 w-full"
+      >
+        <div class="flex flex-row gap-2 h-full w-full">
+          <div class="flex flex-col justify-between">
+            <div
+              class="text-2xl h-12 w-12 font-bold text-white bg-blue-200 rounded-md p-4"
+            ></div>
+          </div>
+
           <div
-            class="text-2xl h-20 w-20 font-bold text-white bg-green-200 rounded-md p-4"
-          ></div>
-        </div>
-
-        <div
-          class="font-bold text-xl row-span-1 col-span-1 text-ellipsis overflow-hidden text-left"
-        >
-          {{class[1]}}
+            class="text-md row-span-1 font-bold col-span-1 text-ellipsis overflow-hidden text-left"
+          >
+            {{class[1]}}
+          </div>
         </div>
       </div>
+      {% endfor %}
     </div>
-    {% endfor %}
   </div>
 </div>
 
@@ -91,13 +101,13 @@
   {% for class in classes %}
   <a
     href="{{ url_for('view_class', class_id=class[0]) }}"
-    class="class_link flex flex-col w-full h-40 col-span-1 row-span-1 rounded-md bg-gray-100 shadow-md hover:bg-gray-200 transition-all p-4"
+    class="class_link flex flex-col w-full h-40 col-span-1 row-span-1 rounded-md border border-gray-100 shadow-md bg-white hover:bg-gray-50 transition-all p-4"
     data-original-url="{{ url_for('view_class', class_id=class[0]) }}"
   >
     <div class="flex flex-row gap-2 h-full w-full" onclick="event.stop">
       <div class="flex flex-col justify-between">
         <div
-          class="text-2xl h-20 w-20 font-bold text-white bg-green-200 rounded-md p-4"
+          class="text-2xl h-20 w-20 font-bold text-white bg-blue-200 rounded-md p-4"
         ></div>
         <div class="flex flex-row justify-between p-2">
           <button class="" onclick="popup('edit_class_popup', {{class[0]}})">
@@ -148,7 +158,7 @@
         <a
           href="#"
           onclick="deleteClass({{ class[0] }}); return false;"
-          class="bg-red-100 font-bold rounded-md py-2 px-auto flex flex-row justify-center cursor-pointer mb-2 w-full text-red-800"
+          class="bg-red-100 font-bold rounded-md py-2 px-4 flex flex-row justify-center cursor-pointer mb-2 w-full text-red-800"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -228,7 +238,6 @@
     let popup;
     if (popup_id == "edit_class_popup") {
       popup = document.getElementById(`class_id_${class_id}`);
-      console.log(`class_id_${class_id}`);
     } else {
       popup = document.getElementById(popup_id);
     }

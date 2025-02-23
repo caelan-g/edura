@@ -29,13 +29,20 @@
     <div class="lg:px-48">
       {% with messages = get_flashed_messages(with_categories=true) %} {% if
       messages %}
-      <div class="w-1/4 font-bold text-gray-800 mx-auto fixed top-18">
+      <div
+        id="message"
+        class="translate-y-[-5rem] transition-all duration-300 mx-auto flex justify-center w-full font-bold text-gray-800 text-center fixed top-4 z-50 px-auto"
+      >
         {% for category, message in messages %} {% if category == 'success' %}
-        <div class="bg-green-100 p-2 rounded-md border border-green-200">
+        <div
+          class="bg-green-100 p-2 rounded-md border border-green-200 text-nowrap"
+        >
           {{message}}
         </div>
         {% else %}
-        <div class="bg-red-100 p-2 rounded-md border border-red-200">
+        <div
+          class="bg-red-100 p-2 rounded-md border border-red-200 text-nowrap"
+        >
           {{message}}
         </div>
         {% endif %} {% endfor %}
@@ -43,5 +50,14 @@
       {% endif %} {% endwith %}
       <div>{% block body %} {% endblock %}</div>
     </div>
+    <script>
+      window.onload = function () {
+        messagePopup = document.getElementById("message");
+        messagePopup.classList.remove("translate-y-[-5rem]");
+        setTimeout(() => {
+          messagePopup.classList.add("translate-y-[-5rem]");
+        }, 2000);
+      };
+    </script>
   </body>
 </html>
