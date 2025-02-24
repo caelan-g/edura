@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlite3
 from flask import Flask, render_template, request, redirect, session, flash, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -9,15 +9,14 @@ import time
 import math
 from bokeh.plotting import figure
 from bokeh.embed import components
+import logging
+import re
 
 #TO DO LIST
-### student ability to edit, delete sessions
-### log file
-### datetime filter (sessions, logs)
 ### teacher classview/dashboard graphs
 ### 2fac auth
-### input validation/sanitisation
 ### enhancing session management - '6.1 To-Do List Changes'
+### clean up urls to prevent xss or injection or whatever
 ### student dashboard completion
 ### settings completion (can edit etc)
 ### join code revamp - only on first page reload, clear on logout
@@ -79,6 +78,13 @@ def init_db():
         ''')
     conn.commit()
     conn.close()
+    
+log = logging.getLogger("werkzeug")
+log.setLevel(logging.ERROR)
+logging.basicConfig(filename='record.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
+app = Flask(__name__)
+app.secret_key = os.getenv("APP_SECRET_KEY")
+init_db()
 
 def find_duplicate(cursor, username): #do i need this function?? - could it be used to find duplicate class codes or something?
     cursor.execute("SELECT COUNT(*) FROM students WHERE username = ?", (username,))
@@ -87,6 +93,9 @@ def find_duplicate(cursor, username): #do i need this function?? - could it be u
     teacher_count = cursor.fetchone()[0]
     if student_count > 0 or teacher_count > 0:
         return True
+    
+def is_valid(text):
+    return isinstance(text, str) and 0 < len(text) <= 255 and re.match(r"^[a-zA-Z0-9\s.,'-]+$", text)
     
 def generate_join_code(class_id):
     join_code = ''
@@ -118,6 +127,7 @@ def add_student(conn, cursor, student_id, class_id):
         conn.commit()
         conn.close()
         if session['user_type'] == 'teacher':
+            app.logger.info(f"Student:{student_id} added to class:{class_id}")
             flash('Student added successfully', 'success')
         else:
             flash('Class joined successfully', 'success')
@@ -150,15 +160,24 @@ def render_bar_graph(name_list, data):
 def convertToSeconds(timeString):
     #timeString is in the format hour:minutes:seconds with each taking up 2 length (if that makes sense)
     times = timeString.split(':')
-    print(times)
+    #print(times)
     total = int(times[0])*3600 + int(times[1])*60 + int(times[2])
     return total
     
+def updateTotalStudyTime(cursor, student_id, class_id, time):
+    cursor.execute('SELECT total_study_time FROM classes_students WHERE student_id = ? AND class_id = ?', (student_id, class_id))
+    total_study_time = cursor.fetchone()[0]
+    #print(time)
+    new_total = total_study_time + time
+    if new_total < 0:
+        new_total = 0
+    cursor.execute('UPDATE classes_students SET total_study_time = ? WHERE student_id = ? AND class_id = ?', (new_total, student_id, class_id))
     
-
-app = Flask(__name__)
-app.secret_key = os.getenv("APP_SECRET_KEY")
-init_db()
+def is_valid_time(time): # will need work
+    if time:
+        return True
+    else:
+        return False
 
 @app.template_filter('dateTimeFormat')
 def date_time_format_filter(date_time):
@@ -169,15 +188,19 @@ def date_time_format_filter(date_time):
     return day_month_year
 
 @app.template_filter('duration')
-def duration_filter(start_time, end_time):
+def duration_filter(start_time, end_time, type='readable'):
     start_time = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     end_time = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S.%f")
-    hours = (end_time - start_time).total_seconds() / 3600
+    total_seconds = (end_time - start_time).total_seconds()
+    hours =  total_seconds / 3600
     minutes = round((hours - round(hours, 0)) * 60, 0)
-    if hours > 1:
-        return f"{round(hours, 0)}h {str(minutes).replace(".0", "")}m"
-    else:
-        return f"{str(minutes).replace(".0", "")}m"
+    if type == 'seconds':
+        return total_seconds
+    elif type == 'readable':
+        if hours > 1:
+            return f"{round(hours, 0)}h {str(minutes).replace(".0", "")}m"
+        else:
+            return f"{str(minutes).replace(".0", "")}m"
     
 @app.template_filter('timeFormat')
 def time_filter_filter(seconds):
@@ -221,21 +244,25 @@ def register():
         hashed_password = generate_password_hash(password)
         conn = sqlite3.connect('study_app.db')
         cursor = conn.cursor()
-        if find_duplicate(cursor, username):
-            flash('Username already exists', 'error')
-        else:
-            if session['user_type'] == 'teacher':
-                cursor.execute("INSERT INTO teachers (username, password, name) VALUES (?, ?, ?)", (username, hashed_password, name))
-                conn.commit()
-                flash('Registration successful. Please login', 'success')
-                conn.close()
-                return redirect('/login')
+        if is_valid(username) and is_valid(password):
+            if find_duplicate(cursor, username):
+                flash('Username already exists', 'error')
             else:
-                cursor.execute("INSERT INTO students (username, password, name) VALUES (?, ?, ?)", (username, hashed_password, name))
-                conn.commit()
-                flash('Registration successful. Please login', 'success')
-                conn.close()
-                return redirect('/login')
+                if session['user_type'] == 'teacher':
+                    cursor.execute("INSERT INTO teachers (username, password, name) VALUES (?, ?, ?)", (username, hashed_password, name))
+                    conn.commit()
+                    flash('Registration successful. Please login', 'success')
+                    conn.close()
+                    return redirect('/login')
+                else:
+                    cursor.execute("INSERT INTO students (username, password, name) VALUES (?, ?, ?)", (username, hashed_password, name))
+                    conn.commit()
+                    flash('Registration successful. Please login', 'success')
+                    conn.close()
+                    return redirect('/login')
+        else:
+            flash('Please enter a valid username or password', 'error')
+            return redirect('/register')
     user_type = request.args.get("user_type")
     if user_type == "teacher":
         session['user_type'] = 'teacher'
@@ -248,33 +275,36 @@ def login():
     if request.method == 'POST':
         username = request.form.get("username")
         password = request.form.get("password")
-        conn = sqlite3.connect('study_app.db')
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM students WHERE username = ?", (username,))
-        student_record = cursor.fetchone()
-        cursor.execute("SELECT * FROM teachers WHERE username = ?", (username,))
-        teacher_record = cursor.fetchone()
-        conn.close()
-        if student_record and check_password_hash(student_record[2], password): #user is array from database - password is in 3rd slot (begins from 0)
-            session['user_id'] = student_record[0]
-            session['username'] = student_record[1]
-            session['name'] = student_record[3]
-            session['user_type'] = 'student'
-            session['start_study_time'] = None
-            session['study_class_id'] = None
-            session['timer_sec'] = 0
-            session['timer_min'] = 0
-            session['timer_hr'] = 0
-            flash('Login successful', 'success')
-            return redirect('/dashboard')
-        elif teacher_record and check_password_hash(teacher_record[2], password):
-            session['user_id'] = teacher_record[0]
-            session['username'] = teacher_record[1]
-            session['name'] = teacher_record[3]
-            session['user_type'] = 'teacher'
-            flash('Login successful', 'success')
-            return redirect('/dashboard')
-        flash('Invalid username or password', 'error')
+        if is_valid(username) and is_valid(password):
+            conn = sqlite3.connect('study_app.db')
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM students WHERE username = ?", (username,))
+            student_record = cursor.fetchone()
+            cursor.execute("SELECT * FROM teachers WHERE username = ?", (username,))
+            teacher_record = cursor.fetchone()
+            conn.close()
+            if student_record and check_password_hash(student_record[2], password): #user is array from database - password is in 3rd slot (begins from 0)
+                session['user_id'] = student_record[0]
+                session['username'] = student_record[1]
+                session['name'] = student_record[3]
+                session['user_type'] = 'student'
+                session['start_study_time'] = None
+                session['study_class_id'] = None
+                session['timer_sec'] = 0
+                session['timer_min'] = 0
+                session['timer_hr'] = 0
+                flash('Login successful', 'success')
+                return redirect('/dashboard')
+            elif teacher_record and check_password_hash(teacher_record[2], password):
+                session['user_id'] = teacher_record[0]
+                session['username'] = teacher_record[1]
+                session['name'] = teacher_record[3]
+                session['user_type'] = 'teacher'
+                flash('Login successful', 'success')
+                return redirect('/dashboard')
+            flash("Your username or password don't match our records", 'error')
+        else:
+            flash('Please enter a valid username or password', 'error')
     return render_template('login.html')
 
 @app.route('/dashboard', methods=["GET"])
@@ -332,7 +362,7 @@ def dashboard():
 def create_class():
     class_name = request.form.get("class_name")
     teacher_id = session['user_id']
-    if not class_name:
+    if not class_name or not is_valid(class_name):
         flash('You have not entered a valid name', 'error')
         return redirect('/dashboard')
     else:
@@ -341,6 +371,7 @@ def create_class():
         cursor.execute("INSERT INTO classes (name, teacher_id) VALUES (?, ?)", (class_name, teacher_id))
         conn.commit()
         conn.close()
+        app.logger.info(f"Class:{class_name} created by teacher:{teacher_id}")
         flash('Class created successfully', 'success')
         return redirect('/dashboard')
 
@@ -351,6 +382,9 @@ def add_study():
     if start_study_time:
         class_id = session['study_class_id']
         description = request.form.get('description')
+        if not is_valid(description):
+            flash('Please enter a valid description', 'error')
+            return redirect('/dashboard')
         session['study_class_id'] = None
         session['timer_sec'] = 0
         session['timer_min'] = 0
@@ -374,6 +408,7 @@ def add_study():
         conn.commit()
         conn.close()
         flash(f'Nice job studying for {study_time} seconds! Study time updated to {total_study_time} seconds', 'success')
+        app.logger.info(f"Student:{user_id} logged study time")
         session['start_study_time'] = None
         return redirect('/dashboard')
     else:
@@ -385,21 +420,24 @@ def add_study():
 @app.route('/join_code', methods=["GET", "POST"])
 def join_code():
     join_code = request.form.get("join_code")
-    student_id = session['user_id']
-    conn = sqlite3.connect('study_app.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM classes WHERE join_code = ?", (join_code,))
-    class_count = cursor.fetchone()[0]
-    if class_count == 0:
-        flash("We couldn't find the class you were looking for", 'error')
-        return redirect('/dashboard')
+    if is_valid(join_code) and len(join_code) == 6 and join_code.isdigit():
+        student_id = session['user_id']
+        conn = sqlite3.connect('study_app.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM classes WHERE join_code = ?", (join_code,))
+        class_count = cursor.fetchone()[0]
+        if class_count == 0:
+            flash("We couldn't find the class you were looking for", 'error')
+            return redirect('/dashboard')
+        else:
+            cursor.execute("SELECT class_id FROM classes WHERE join_code = ?", (join_code,))
+            class_id = cursor.fetchone()[0]
+            add_student(conn, cursor, student_id, class_id)
+            return redirect('/dashboard')
     else:
-        cursor.execute("SELECT class_id FROM classes WHERE join_code = ?", (join_code,))
-        class_id = cursor.fetchone()[0]
-        add_student(conn, cursor, student_id, class_id)
+        flash('Please enter a valid join-code', 'error')
         return redirect('/dashboard')
         
-    
 @app.route('/view_class/<int:class_id>', methods=['GET', 'POST'])
 def view_class(class_id):
     session['page'] = 'view_class'
@@ -464,7 +502,7 @@ def settings():
             cursor.execute("SELECT * FROM teachers WHERE teacher_id = ?", (session['user_id'],))
         user_data = cursor.fetchall()[0]
         conn.close()
-        print(user_data)
+        #print(user_data)
         return render_template('settings.html', user_data=user_data)
     else:
         flash('Please login to continue', 'error')
@@ -472,7 +510,7 @@ def settings():
     
 @app.route('/update_class', methods=['POST'])
 def update_class():
-    edit_class_id = int(request.form.get("class_id"))
+    edit_class_id = int(request.form.get("class_id")) # may need cyber
     new_class_name = request.form.get("class_name")
     if new_class_name:
         conn = sqlite3.connect('study_app.db')
@@ -480,6 +518,8 @@ def update_class():
         cursor.execute("UPDATE classes SET name = ? WHERE class_id = ?", (new_class_name, edit_class_id))
         conn.commit()
         conn.close()
+        app.logger.info(f"Class:{edit_class_id} updated by teacher:{session['user_id']}")
+        flash('Class updated successfully', 'success')
     else:
         flash('Please input a name', 'error')
     return redirect('/dashboard')
@@ -493,6 +533,7 @@ def delete_class(class_id):
         cursor.execute("DELETE FROM classes_students WHERE class_id = ?", (class_id,))
         conn.commit()
         conn.close()
+        app.logger.info(f"Class:{class_id} deleted by teacher:{session['user_id']}")
         flash('Class deleted', 'success')
         return redirect('/dashboard') #bug here - doens't show on first reload due to js
     else:
@@ -520,17 +561,21 @@ def reload_join_code():
 def invite_student():
     student_username = request.form.get('student_username')
     class_id = request.form.get("class_id")
-    conn = sqlite3.connect('study_app.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT student_id FROM students WHERE username = ?', (student_username,))
-    student_id = cursor.fetchone()
-    if student_id:
-        student_id = student_id[0]
-        add_student(conn, cursor, student_id, class_id)
-        return redirect(url_for('view_class', class_id=class_id))
-    else:      
-        flash('Student not found', 'error')
-        conn.close()
+    if is_valid(class_id) and is_valid(student_username):
+        conn = sqlite3.connect('study_app.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT student_id FROM students WHERE username = ?', (student_username,))
+        student_id = cursor.fetchone()
+        if student_id:
+            student_id = student_id[0]
+            add_student(conn, cursor, student_id, class_id)
+            return redirect(url_for('view_class', class_id=class_id))
+        else:      
+            flash('Student not found', 'error')
+            conn.close()
+            return redirect(url_for('view_class', class_id=class_id))
+    else:
+        flash('Please enter a valid username', 'error')
         return redirect(url_for('view_class', class_id=class_id))
     
 @app.route('/sessions')
@@ -549,48 +594,22 @@ def sessions():
     
 @app.route('/remove_student', methods=['POST'])
 def remove_student():
+    student_id = request.form.get('student_id')
+    class_id = request.form.get('class_id')
     if session['user_id'] and session['user_type'] == 'teacher': 
-        student_id = request.form.get('student_id')
-        class_id = request.form.get('class_id')
-        conn = sqlite3.connect('study_app.db')
-        cursor = conn.cursor()
-        cursor.execute('DELETE FROM classes_students WHERE student_id = ? AND class_id = ?', (student_id, class_id))
-        cursor.execute('DELETE FROM study_sessions WHERE student_id = ? AND class_id = ?', (student_id, class_id))
-        conn.commit()
-        conn.close()
-        flash('Student removed', 'success')
-        return redirect(f'/view_class/{class_id}')
-    else:  
-        flash('Please login to continue', 'error')
-        return redirect('/login')
-    
-
-@app.route('/add_study_time', methods=['POST'])
-def add_study_time():
-    if session['user_id'] and session['user_type'] == 'teacher': 
-        student_id = request.form.get('student_id')
-        class_id = request.form.get('class_id')
-        conn = sqlite3.connect('study_app.db')
-        cursor = conn.cursor()
-        conn.commit()
-        conn.close()
-        flash('Study time added', 'success')
-        #return redirect(f'/view_class/{class_id}')
-    else:  
-        flash('Please login to continue', 'error')
-        return redirect('/login')
-
-@app.route('/subtract_study_time', methods=['POST'])
-def subtract_study_time():
-    if session['user_id'] and session['user_type'] == 'teacher': 
-        student_id = request.form.get('student_id')
-        class_id = request.form.get('class_id')
-        conn = sqlite3.connect('study_app.db')
-        cursor = conn.cursor()
-        conn.commit()
-        conn.close()
-        flash('Study time subtracted', 'success')
-        return redirect(f'/view_class/{class_id}')
+        if is_valid(student_id) and is_valid(class_id):
+            conn = sqlite3.connect('study_app.db')
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM classes_students WHERE student_id = ? AND class_id = ?', (student_id, class_id))
+            cursor.execute('DELETE FROM study_sessions WHERE student_id = ? AND class_id = ?', (student_id, class_id))
+            conn.commit()
+            conn.close()
+            app.logger.info(f"Student:{student_id} removed by teacher:{session['user_id']} from class:{class_id}")
+            flash('Student removed', 'success')
+            return redirect(f'/view_class/{class_id}')
+        else:
+            flash('Invalid student id or class id', 'error')
+            return redirect(f'/dashboard')
     else:  
         flash('Please login to continue', 'error')
         return redirect('/login')
@@ -601,15 +620,23 @@ def edit_study_time():
         student_id = request.form.get('student_id')
         class_id = request.form.get('class_id')
         new_study_time = request.form.get('new_study_time')
-        study_time_seconds = convertToSeconds(new_study_time)
-        conn = sqlite3.connect('study_app.db')
-        cursor = conn.cursor()
-        cursor.execute('UPDATE classes_students SET total_study_time = ? WHERE student_id = ? AND class_id = ?', (study_time_seconds, student_id, class_id))
-        print(study_time_seconds)
-        conn.commit()
-        conn.close()
-        flash(f'Study time successfully updated', 'success')
-        return redirect(f'/view_class/{class_id}')
+        if is_valid_time(new_study_time) and is_valid(student_id) and is_valid(class_id):
+            study_time_seconds = convertToSeconds(new_study_time)
+            conn = sqlite3.connect('study_app.db')
+            cursor = conn.cursor()
+            cursor.execute('UPDATE classes_students SET total_study_time = ? WHERE student_id = ? AND class_id = ?', (study_time_seconds, student_id, class_id))
+            #print(study_time_seconds)
+            conn.commit()
+            conn.close()
+            app.logger.info(f"Study time for student:{student_id} in class:{class_id} updated by teacher:{session['user_id']}")
+            flash(f'Study time successfully updated', 'success')
+            return redirect(f'/view_class/{class_id}')
+        elif not is_valid(student_id) or not is_valid(class_id):
+            flash('Invalid student id or class id', 'error')
+            return redirect('/dashboard')
+        else:
+            flash('Please enter a valid time', 'error')
+            return redirect(f'/view_class/{class_id}')
     else:
         flash('Please login to continue', 'error')
         return redirect('/login')
@@ -620,24 +647,54 @@ def delete_session():
         session_id = request.form.get('session_id')
         class_id = request.form.get('class_id')
         student_id = request.form.get('student_id')
-        conn = sqlite3.connect('study_app.db')
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM study_sessions WHERE session_id = ?', (session_id,))
-        study_session = cursor.fetchall()[0]
-        end_time = datetime.strptime(study_session[4], "%Y-%m-%d %H:%M:%S.%f")
-        start_time = datetime.strptime(study_session[3], "%Y-%m-%d %H:%M:%S")
-        session_duration = int((end_time - start_time).total_seconds())
-        cursor.execute('SELECT total_study_time FROM classes_students WHERE student_id = ? AND class_id = ?', (student_id, class_id))
-        total_study_time = cursor.fetchone()[0]
-        print(f'old total: {total_study_time}')
-        new_total = total_study_time - session_duration
-        print(f'new total: {new_total}')
-        cursor.execute('UPDATE classes_students SET total_study_time = ? WHERE student_id = ? AND class_id = ?', (new_total, student_id, class_id))
-        cursor.execute('DELETE FROM study_sessions WHERE session_id = ?', (session_id,))
-        conn.commit()
-        conn.close()
-        flash(f'Session deleted', 'success')
-        return redirect(f'/view_class/{class_id}')
+        if is_valid(session_id) and is_valid(class_id) and is_valid(student_id):
+            conn = sqlite3.connect('study_app.db')
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM study_sessions WHERE session_id = ?', (session_id,))
+            study_session = cursor.fetchall()[0]
+            end_time = datetime.strptime(study_session[4], "%Y-%m-%d %H:%M:%S.%f")
+            start_time = datetime.strptime(study_session[3], "%Y-%m-%d %H:%M:%S")
+            session_duration = int((end_time - start_time).total_seconds())
+            updateTotalStudyTime(cursor, student_id, class_id, session_duration * -1)
+            cursor.execute('DELETE FROM study_sessions WHERE session_id = ?', (session_id,))
+            conn.commit()
+            conn.close()
+            app.logger.info(f"Session:{session_id} deleted by teacher:{session['user_id']}")
+            flash(f'Session deleted', 'success')
+            return redirect(f'/view_class/{class_id}')
+        else:
+            flash('Invalid class, student or session id', 'error')
+            return redirect('/dashboard')
+    else:
+        flash('Please login to continue', 'error')
+        return redirect('/login')
+    
+@app.route('/update_session', methods=['POST'])
+def update_session():
+    if session['user_id'] and session['user_type'] == 'teacher':
+        session_id = request.form.get("session_id")
+        student_id = request.form.get("student_id")
+        class_id = request.form.get("class_id")
+        if is_valid(session_id) and is_valid(class_id) and is_valid(student_id):
+            duration = math.floor(float(request.form.get("duration")))
+            new_session_duration = request.form.get('new_session_duration')
+            new_duration = convertToSeconds(new_session_duration)
+            conn = sqlite3.connect('study_app.db')
+            cursor = conn.cursor()
+            cursor.execute('SELECT end_time FROM study_sessions WHERE session_id = ?', (session_id,))
+            cursor.execute('SELECT end_time FROM study_sessions WHERE session_id = ?', (session_id,))
+            end_time = datetime.strptime(cursor.fetchone()[0], "%Y-%m-%d %H:%M:%S.%f")
+            new_end_time = end_time + timedelta(seconds=(new_duration - duration))
+            cursor.execute('UPDATE study_sessions SET end_time = ? WHERE session_id = ?', (new_end_time, session_id))
+            updateTotalStudyTime(cursor, student_id, class_id, new_duration - duration)
+            conn.commit()
+            conn.close()
+            app.logger.info(f"Session:{session_id} updated by teacher:{session['user_id']}")
+            flash(f'Session time successfully updated', 'success')
+            return redirect(f'/view_class/{class_id}')
+        else:
+            flash('Invalid class, student or session id', 'error')
+            return redirect('/dashboard')
     else:
         flash('Please login to continue', 'error')
         return redirect('/login')

@@ -257,9 +257,49 @@
     >
       <div class="flex flex-row justify-between items-end">
         <div class="text-xl font-bold">{{session[2] | getStudentName}}</div>
-        <div class="text-xl font-bold">
+        <div
+          id="study_show_session_id_{{session[0]}}"
+          class="text-xl font-bold"
+        >
           {{ session[3] | duration(session[4]) }}
         </div>
+        <form
+          action="/update_session"
+          method="post"
+          id="study_edit_session_id_{{session[0]}}"
+          class="hidden flex flex-row"
+        >
+          <input
+            class="text-xl font-bold bg-gray-100 rounded-md px-2"
+            value="{{ (session[3] | duration(session[4], 'seconds')) | timeEditFormat }}"
+            name="new_session_duration"
+            placeholder="00:00:00"
+          />
+          <input
+            type="hidden"
+            name="duration"
+            value="{{ session[3] | duration(session[4], 'seconds') }}"
+          />
+          <input type="hidden" name="session_id" value="{{session[0]}}" />
+          <input type="hidden" name="class_id" value="{{session[1]}}" />
+          <input type="hidden" name="student_id" value="{{session[2]}}" />
+          <button class="bg-gray-800 rounded-md p-1 text-white my-auto">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2.5"
+              stroke="currentColor"
+              class="size-5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m4.5 12.75 6 6 9-13.5"
+              />
+            </svg>
+          </button>
+        </form>
       </div>
       <div class="text-md text-gray-800 mb-">{{session[5]}}</div>
       <div class="flex flex-row justify-between">
@@ -448,10 +488,10 @@
     }
   }
   function actionPopup(id, type) {
-    console.log(type);
+    //console.log(type);
     let popup;
     if (type == "session") {
-      console.log(`session_id_${id}`);
+      //console.log(`session_id_${id}`);
       popup = document.getElementById(`session_id_${id}`);
     } else {
       popup = document.getElementById(`student_id_${id}`);
@@ -478,7 +518,7 @@
     previousPopup = popup;
   }
   function toggleStudyEdit(id, type) {
-    console.log(id);
+    //console.log(id);
     let show;
     let edit;
     if (type == "session") {
@@ -488,8 +528,8 @@
       show = document.getElementById(`study_show_student_id_${id}`);
       edit = document.getElementById(`study_edit_student_id_${id}`);
     }
-    console.log(show);
-    console.log(edit);
+    //console.log(show);
+    //console.log(edit);
     if (edit.classList.contains("hidden")) {
       show.classList.add("hidden");
       edit.classList.remove("hidden");

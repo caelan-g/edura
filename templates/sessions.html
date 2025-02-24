@@ -4,12 +4,12 @@
   class="table-fixed w-full text-left text-lg lg:text-base shadow-md rounded-md border border-gray-100"
 >
   <thead>
-    <tr class="bg-gray-200">
+    <tr class="bg-gray-20`">
       <!--<th class="p-2 rounded-tl-md w-2 lg:w-12">ID</th>-->
       <th class="p-2 rounded-tl-md w-1/2">Session Description</th>
-      <th class="p-2 w-60">Date</th>
       <th class="p-2 w-24">Duration</th>
-      <th class="p-2 rounded-tr-md w-12">A</th>
+      <th class="p-2 w-60 rounded-tr-md">Date</th>
+      <!--<th class="p-2 rounded-tr-md w-12">A</th>-->
     </tr>
   </thead>
   <tbody>
@@ -21,9 +21,11 @@
       <td class="p-2 {% if loop.last %} rounded-bl-md{% endif %}">
         {{row[5]}}
       </td>
-      <td class="p-2 font-bold">{{row[3] | dateTimeFormat()}}</td>
       <td class="p-2">{{row[2] | timeFormat()}}</td>
-      <td
+      <td class="p-2 font-bold {% if loop.last %} rounded-br-md{% endif %}">
+        {{row[3] | dateTimeFormat()}}
+      </td>
+      <!--<td
         class="p-2 {% if loop.last %} rounded-br-md {% endif %} overflow-hidden"
       >
         <div class="flex flex-row justify-between">
@@ -66,7 +68,7 @@
             </form>
           </div>
         </div>
-      </td>
+      </td>-->
     </tr>
     {% endfor %}
   </tbody>
