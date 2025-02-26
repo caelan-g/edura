@@ -15,39 +15,39 @@
   </head>
   <body class="">
     <div
-      class="bg-gray-800 text-white font-bold p-2 w-full flex flex-row gap-12 lg:px-48"
+      class="font-bold p-2 w-full flex flex-row justify-between gap-12 lg:px-48"
     >
-      <a href="/">Home</a>
-      <a href="/login">Login</a>
+      <a href="/">Study App</a>
       <a href="{{ url_for('register', user_type='student') }}"
         >Register for Students</a
       >
       <a href="{{ url_for('register', user_type='teacher') }}"
         >Register for Teachers</a
       >
-    </div>
-    <div class="lg:px-48">
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %}
-      <div
-        id="message"
-        class="translate-y-[-5rem] transition-all duration-300 mx-auto flex justify-center w-full font-bold text-gray-800 text-center fixed top-4 z-50 px-auto"
+      <a href="/login" class="bg-gray-800 text-white rounded-full px-2 py-1"
+        >Login</a
       >
-        {% for category, message in messages %} {% if category == 'success' %}
-        <div
-          class="bg-green-100 p-2 rounded-md border border-green-200 text-nowrap"
-        >
-          {{message}}
-        </div>
-        {% else %}
-        <div
-          class="bg-red-100 p-2 rounded-md border border-red-200 text-nowrap"
-        >
-          {{message}}
-        </div>
-        {% endif %} {% endfor %}
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <div
+      id="message"
+      class="translate-y-[-5rem] transition-all duration-300 mx-auto flex justify-center w-full font-bold text-gray-800 text-center fixed top-4 z-50 px-auto"
+    >
+      {% for category, message in messages %} {% if category == 'success' %}
+      <div
+        class="bg-green-100 p-2 rounded-md border border-green-200 text-nowrap"
+      >
+        {{message}}
       </div>
-      {% endif %} {% endwith %}
+      {% else %}
+      <div class="bg-red-100 p-2 rounded-md border border-red-200 text-nowrap">
+        {{message}}
+      </div>
+      {% endif %} {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
+    <div class="lg:px-48">
       <div>{% block body %} {% endblock %}</div>
     </div>
     <script>

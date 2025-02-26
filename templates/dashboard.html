@@ -8,9 +8,9 @@
     <div
       class="border bg-white border-gray-100 lg:shadow-md p-4 w-full rounded-md h-96"
     >
-      {% if script %}
-      <div class="w-full h-full">{{ div|safe }}</div>
-      {{script|safe}} {% else %}
+      {% if bar_script %} {{ resources|safe }}
+      <div class="w-full h-full">{{ bar_div|safe }}</div>
+      {{bar_script|safe}} {% else %}
       <div class="mx-auto my-auto text-center align-middle font-bold text-2xl">
         Join a class to view your data
       </div>
@@ -53,7 +53,7 @@
         <div class="flex flex-row gap-2 h-full w-full">
           <div class="flex flex-col justify-between">
             <div
-              class="text-2xl h-12 w-12 font-bold text-white bg-blue-200 rounded-md p-4"
+              class="text-2xl h-12 w-12 font-bold text-white {{ class[2] | colourDictionary }} rounded-md p-4"
             ></div>
           </div>
 
@@ -65,6 +65,16 @@
         </div>
       </div>
       {% endfor %}
+    </div>
+    <div
+      class="rounded-md bg-white border border-gray-100 shadow-md px-4 py-4 w-full h-[25rem]"
+    >
+      <div class="text-2xl font-bold">Studying Distribution</div>
+      {% if donut_script %} {{ resources|safe }}
+      <div class="w-full h-full relative top-[-1rem]">{{ donut_div|safe }}</div>
+      {{donut_script|safe}} {% else %}
+      <div class="align-middle text-md">Join a class to view data</div>
+      {% endif %}
     </div>
   </div>
 </div>
@@ -107,7 +117,7 @@
     <div class="flex flex-row gap-2 h-full w-full" onclick="event.stop">
       <div class="flex flex-col justify-between">
         <div
-          class="text-2xl h-20 w-20 font-bold text-white bg-blue-200 rounded-md p-4"
+          class="text-2xl h-20 w-20 font-bold text-white {{ class[4] | colourDictionary }} rounded-md p-4"
         ></div>
         <div class="flex flex-row justify-between p-2">
           <button class="" onclick="popup('edit_class_popup', {{class[0]}})">
@@ -145,20 +155,61 @@
       class="bg-white w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
       onclick="event.stopPropagation()"
     >
-      <form action="/update_class" method="post">
+      <form action="/update_class" method="post" class="flex flex-col gap-2">
         <div class="text-2xl font-bold">Edit Class</div>
         <input type="hidden" name="class_id" value="{{class[0]}}" />
         <input
           type="text"
           name="class_name"
           value="{{class[1]}}"
-          class="my-6 bg-gray-100 p-2 rounded-md font-bold text-xl w-full"
+          class="bg-gray-100 p-2 rounded-md font-bold text-xl w-full"
         />
+        <div class="flex flex-row gap-2 mb-4">
+          {% for colour in colours %}
+          <label
+            class="w-12 h-12 rounded-md cursor-pointer {{ colour | colourDictionary }}"
+          >
+            {% if colour == class[4] %}
+            <input
+              type="radio"
+              name="colour"
+              value="{{ colour }}"
+              class="hidden peer"
+              checked
+            />
+            {% else %}
+            <input
+              type="radio"
+              name="colour"
+              value="{{ colour }}"
+              class="hidden peer"
+            />
+            {% endif %}
+            <div
+              class="w-full h-full rounded-md peer-checked:ring-2 ring-gray-800 peer-checked:scale-105 transition-all opacity-50"
+            ></div>
+          </label>
+          {% endfor %}
+        </div>
 
+        <div class="flex flex-row gap-2">
+          <div
+            class="bg-gray-200 p-2 font-bold rounded-md cursor-pointer w-1/2 text-center"
+            onclick="popup('edit_class_popup', {{class[0]}})"
+          >
+            Cancel
+          </div>
+          <button
+            type="submit"
+            class="bg-gray-800 p-2 font-bold text-white rounded-md w-1/2 text-center"
+          >
+            Save
+          </button>
+        </div>
         <a
           href="#"
           onclick="deleteClass({{ class[0] }}); return false;"
-          class="bg-red-100 font-bold rounded-md py-2 px-4 flex flex-row justify-center cursor-pointer mb-2 w-full text-red-800"
+          class="bg-red-100 font-bold rounded-md py-2 px-4 flex flex-row justify-center cursor-pointer w-full text-red-800"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -176,20 +227,6 @@
             Delete "{{class[1]}}"?
           </div>
         </a>
-        <div class="flex flex-row gap-2">
-          <div
-            class="bg-gray-200 p-2 font-bold rounded-md cursor-pointer w-1/2 text-center"
-            onclick="popup('edit_class_popup', {{class[0]}})"
-          >
-            Cancel
-          </div>
-          <button
-            type="submit"
-            class="bg-gray-800 p-2 font-bold text-white rounded-md w-1/2 text-center"
-          >
-            Save
-          </button>
-        </div>
       </form>
     </div>
   </div>
@@ -204,15 +241,33 @@
     class="bg-white w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
     onclick="event.stopPropagation()"
   >
-    <form action="/create_class" method="post">
+    <form action="/create_class" method="post" class="flex flex-col gap-4">
       <div class="text-2xl font-bold">Create new class</div>
       <input
-        class="bg-gray-100 p-2 rounded-md w-full my-6"
+        class="bg-gray-100 p-2 rounded-md w-full"
         autocomplete="off"
         name="class_name"
         placeholder="Class Name e.g. Mr Jacque's Software"
         type="text"
+        required
       />
+      <div class="flex flex-row gap-2">
+        {% for colour in colours %}
+        <label
+          class="w-12 h-12 rounded-md cursor-pointer {{ colour | colourDictionary }}"
+        >
+          <input
+            type="radio"
+            name="colour"
+            value="{{ colour }}"
+            class="hidden peer"
+          />
+          <div
+            class="w-full h-full rounded-md peer-checked:ring-2 ring-gray-800 peer-checked:scale-105 transition-all opacity-50"
+          ></div>
+        </label>
+        {% endfor %}
+      </div>
       <div class="flex flex-row gap-2">
         <div
           class="bg-gray-200 p-2 font-bold rounded-md cursor-pointer w-1/2 text-center"

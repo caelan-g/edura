@@ -5,13 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
     {% if session['page'] == 'dashboard' and session['user_type'] == 'student'
-    %}
-    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.2.min.js"></script>
-    <link
-      href="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.2.min.css"
-      rel="stylesheet"
-    />
-    {% endif %}
+    %} {% endif %}
     <title>Study App</title>
     <!--<link
       rel="stylesheet"
@@ -29,7 +23,7 @@
         <div class="transition-all w-full my-8">
           {% if not session['start_study_time'] %}
           <div
-            class="peer font-bold rounded-full bg-blue-500 px-2 py-1 flex justify-between w-28 cursor-pointer"
+            class="peer font-bold rounded-full bg-green-500 px-2 py-1 flex justify-between w-28 cursor-pointer"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -70,7 +64,7 @@
           {% else %}
           <a
             onclick="stopTimer(), nav_popup('session_popup')"
-            class="font-bold rounded-full bg-blue-500 px-2 py-1 flex justify-between w-28 cursor-pointer relative"
+            class="font-bold rounded-full bg-red-500 px-2 py-1 flex justify-between w-28 cursor-pointer relative"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -107,7 +101,7 @@
             <a
               href="{{ url_for('add_study', class_id=class[0]) }}"
               onclick="startTimer()"
-              class="p-2 font-bold text-xs text-green-500 rounded-md bg-green-200 text-ellipsis text-ellipsis overflow-hidden text-nowrap"
+              class="p-2 font-bold text-xs rounded-md {{ class[2] | colourDictionary }} text-ellipsis text-ellipsis overflow-hidden text-nowrap"
               >{{class[1]}}</a
             >
             {% endfor %}
