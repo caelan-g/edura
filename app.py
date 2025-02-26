@@ -22,9 +22,7 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 
 #TO DO LIST
-### teacher classview/dashboard graphs
 ### 2fac auth
-### student dashboard completion
 ### settings completion (can edit etc)
 ### join code revamp - only on first page reload, clear on logout
 ### landing page revamp
