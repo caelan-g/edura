@@ -180,11 +180,14 @@ def get_class(class_id):
     
 def render_bar_graph(name_list, data, colour_data):
     plot = figure(x_range=name_list, toolbar_location=None, sizing_mode="stretch_both", tools="")
-    plot.vbar(x=name_list, top=data, line_width=0, width=0.9, fill_color=colour_data, border_radius=6)#"rgb(59, 130, 246)")
-    plot.background_fill_color = 'white'
-    plot.border_fill_color = 'white'
+    if colour_data == 'monochrome':
+        plot.vbar(x=name_list, top=data, line_width=0, width=0.9, fill_color="rgb(59, 130, 246)", border_radius=6)
+    else:
+        plot.vbar(x=name_list, top=data, line_width=0, width=0.9, fill_color=colour_data, border_radius=6)#"rgb(59, 130, 246)")
+    plot.background_fill_color = None
+    plot.border_fill_color = None
     plot.y_range.start = 0
-    plot.outline_line_color = 'white'
+    plot.outline_line_color = None
     plot.yaxis.visible = False
     plot.xgrid.grid_line_color = None
     plot.ygrid.grid_line_alpha = 0.5
@@ -227,10 +230,11 @@ def render_donut_graph(name_list, data, colour_data):
     r = plot.add_glyph(source, glyph)
 
     # Create Legend
-    """legend = Legend(location="center")
+    legend = Legend(location="left")
+    legend.border_line_color = None
     for i, name in enumerate(name_list):
         legend.items.append(LegendItem(label=name, renderers=[r], index=i))
-    plot.add_layout(legend, "center")"""
+    plot.add_layout(legend, "below")
 
     # Get Bokeh Components
     return components(plot)
@@ -442,6 +446,10 @@ def dashboard():
                 WHERE students.student_id = ? ORDER BY classes.class_id DESC
                 ''', (session['user_id'],))
             classes = cursor.fetchall()
+            
+            cursor.execute("SELECT * FROM study_sessions WHERE student_id = ? LIMIT 5", (session['user_id'],))
+            sessions = cursor.fetchall()
+            
             class_name = []
             colour_data = []
             
@@ -459,13 +467,14 @@ def dashboard():
                 donut_script, donut_div = render_donut_graph(class_name, time_data, colour_data)
             else:
                 bar_script, bar_div = None, None
-                
+            resources = INLINE.render()
+            return render_template('dashboard.html', colours=COLOURS, classes=classes, bar_script=bar_script, bar_div=bar_div, donut_script=donut_script, donut_div=donut_div, resources=resources, sessions=sessions)  
         else:
             cursor.execute("SELECT * FROM classes WHERE teacher_id = ?", (session['user_id'],))
             classes = cursor.fetchall()
-        conn.close()
-        resources = INLINE.render()
-        return render_template('dashboard.html', colours=COLOURS, classes=classes, bar_script=bar_script, bar_div=bar_div, donut_script=donut_script, donut_div=donut_div, resources=resources)
+            conn.close()
+            return render_template('dashboard.html', colours=COLOURS, classes=classes)
+        
     else:
         flash('Please login to continue')
         return redirect('/login')
@@ -601,7 +610,18 @@ def view_class(class_id):
                         average_study_time = round(total/sum, 1)
                     else:
                         average_study_time = 0
-                    return render_template('view-class.html', class_data=class_data, class_entity=class_entity, average_study_time=average_study_time, join_code=join_code, session_data=session_data)
+                        
+                    names = []
+                    study_time = []  
+                    for i in class_data:
+                        names.append(i[1])
+                        study_time.append(i[2])
+                        
+                    resources = INLINE.render()
+                        
+                    bar_script, bar_div = render_bar_graph(names, study_time, 'monochrome')
+                    
+                    return render_template('view-class.html', resources=resources, bar_script=bar_script, bar_div=bar_div, class_data=class_data, class_entity=class_entity, average_study_time=average_study_time, join_code=join_code, session_data=session_data)
                 else:
                     flash('You are not the owner of this class', 'error')
                     return redirect('/dashboard')

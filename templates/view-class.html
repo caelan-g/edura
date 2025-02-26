@@ -1,7 +1,7 @@
 {% extends "layouts/layout_user.html" %} {% block body %}
 <!---->
 {% if class_data %}
-<div class="flex flex-row justify-between my-4">
+<div class="flex flex-row justify-between">
   <div class="text-4xl font-bold">{{class_entity[1]}}</div>
   <div class="flex flex-row gap-2">
     <div class="flex flex-row gap-2">
@@ -50,15 +50,24 @@
     </div>
   </div>
 </div>
-<div class="flex flex-row gap-2">
+<div class="flex flex-row gap-2 mt-4">
   <div class="flex flex-col gap-2 grow">
-    <div class="text-4xl font-bold">Graphs</div>
-    <div
-      class="text-md font-bold bg-white border border-gray-100 rounded-md p-4 shadow-md"
-    >
+    <div class="text-3xl font-bold">Graphs</div>
+    <div class="text-md font-bold bg-white rounded-md p-4 shadow-md">
+      <div class="bg-white w-full h-96">
+        {% if bar_script %} {{ resources|safe }}
+        <div class="w-full h-full">{{ bar_div|safe }}</div>
+        {{bar_script|safe}} {% else %}
+        <div
+          class="mx-auto my-auto text-center align-middle font-bold text-2xl"
+        >
+          Join a class to view your data
+        </div>
+        {% endif %}
+      </div>
       Average study time is {{average_study_time}} seconds
     </div>
-    <div class="text-4xl font-bold">Class</div>
+    <div class="text-3xl font-bold">Class</div>
     <table
       class="table-auto text-left text-lg lg:text-base shadow-md rounded-md border border-gray-100"
     >
@@ -250,7 +259,7 @@
   </div>
 
   <div class="flex flex-col gap-2 w-[24rem]">
-    <div class="text-4xl font-bold">Sessions</div>
+    <div class="text-3xl font-bold">Sessions</div>
     {% for session in session_data %}
     <div
       class="bg-white border border-gray-100 rounded-md px-4 py-4 flex flex-col shadow-md"

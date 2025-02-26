@@ -19,9 +19,49 @@
 
     <div class="text-4xl font-bold hidden">Assignments</div>
     <div
-      class="border bg-white border-gray-100 lg:shadow-md p-4 w-full rounded-md h-48"
+      class="border bg-white border-gray-100 lg:shadow-md p-4 w-full rounded-md"
     >
-      Recent Sessions
+      <div class="text-2xl font-bold mb-2">Recent Sessions</div>
+      {% for session in sessions %}
+      <div
+        class="flex flex-col mx-4 py-4 border-t {%if loop.last %} border-b {% endif %}"
+      >
+        <div class="flex flex-row justify-between items-end">
+          <div class="text-xl font-bold">{{session[5]}}</div>
+          <div
+            id="study_show_session_id_{{session[0]}}"
+            class="text-xl font-bold"
+          >
+            {{ session[3] | duration(session[4]) }}
+          </div>
+        </div>
+        <div class="text-sm text-gray-500">
+          {{session[3] | dateTimeFormat()}}
+        </div>
+      </div>
+      {% endfor %}
+      <div class="flex justify-between mt-4">
+        <a
+          class="bg-gray-800 font-bold text-white mx-auto text-center py-2 px-4 rounded-md cursor-pointer flex flex-row gap-2"
+          href="/sessions"
+        >
+          View more
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2.5"
+            stroke="currentColor"
+            class="size-5 relative top-[.1rem]"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3"
+            />
+          </svg>
+        </a>
+      </div>
     </div>
   </div>
 
@@ -39,7 +79,7 @@
           />
           <button
             type="submit"
-            class="bg-gray-800 p-2 font-bold text-lg text-white rounded-md"
+            class="bg-gray-800 py-2 px-4 font-bold text-lg text-white rounded-md"
           >
             Join
           </button>
@@ -67,7 +107,7 @@
       {% endfor %}
     </div>
     <div
-      class="rounded-md bg-white border border-gray-100 shadow-md px-4 py-4 w-full h-[25rem]"
+      class="rounded-md bg-white border border-gray-100 shadow-md px-4 py-4 w-full h-[30rem]"
     >
       <div class="text-2xl font-bold">Studying Distribution</div>
       {% if donut_script %} {{ resources|safe }}
@@ -107,7 +147,7 @@
     </svg>
   </button>
 </div>
-<div class="grid grid-cols-3 gap-6 w-full">
+<div class="grid grid-cols-3 gap-4 w-full mt-3">
   {% for class in classes %}
   <a
     href="{{ url_for('view_class', class_id=class[0]) }}"
