@@ -3,6 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Merriweather+Sans:ital,wght@0,800;1,800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Merriweather+Sans:ital,wght@0,800;1,800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="{{ url_for('static', filename='logo-blue.svg') }}"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
     {% if session['page'] == 'dashboard' and session['user_type'] == 'student'
     %} {% endif %}
@@ -13,14 +30,61 @@
       href="{{ url_for('static', filename='tailwind.min.css')}}"
     />-->
   </head>
-  <body class="flex flex-row bg-gray-50">
+  <body class="flex flex-col lg:flex-row lg:bg-gray-50">
     <nav
-      class="bg-gray-800 text-white font-bold p-2 flex flex-col align-middle h-full fixed w-48 pt-24 pb-20 gap-10"
+      class="bg-gray-800 text-white font-bold p-2 flex flex-row lg:flex-col align-middle lg:h-full fixed lg:w-48 lg:pt-24 lg:pb-20 lg:gap-10 w-full"
     >
-      <div class="text-2xl px-2 flex flex-row">Study App</div>
-      <div class="flex flex-col gap-2">
+      <div class="text-3xl px-2 flex flex-row gap-1">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 32 32"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          class="size-8"
+        >
+          <path
+            d="M4.87404 21.5569C4.61994 21.9559 4.32955 22.4274 4.11175 22.7901C3.89396 23.1528 4.00284 23.6242 4.36584 23.8419L9.33893 26.8884C9.70193 27.106 10.1738 26.9972 10.3916 26.6345C10.5731 26.3081 10.8272 25.8729 11.1176 25.4014C13.0778 22.1735 15.0743 22.5362 18.6317 24.2408L23.5684 26.562C23.9677 26.7433 24.4033 26.562 24.5848 26.1993L26.9443 20.8678C27.1258 20.5051 26.9443 20.0336 26.5813 19.8523C25.5286 19.3808 23.4596 18.4016 21.6446 17.4948C14.8928 14.3032 9.23002 14.4845 4.87404 21.5569Z"
+            fill="url(#paint0_linear)"
+          />
+          <path
+            d="M27.1259 9.44315C27.38 9.04419 27.6704 8.5727 27.8882 8.21001C28.106 7.84732 27.9971 7.37583 27.6341 7.15822L22.661 4.11165C22.298 3.89404 21.8261 4.00285 21.6083 4.36553C21.4268 4.69195 21.1727 5.12718 20.8823 5.59867C18.9221 8.82658 16.9256 8.46389 13.3683 6.75926L8.43149 4.43807C8.03219 4.25673 7.59657 4.43807 7.41507 4.80076L5.05558 10.1322C4.87408 10.4949 5.05558 10.9664 5.41858 11.1478C6.47127 11.6193 8.54036 12.5985 10.3554 13.5052C17.1071 16.6969 22.7699 16.4793 27.1259 9.44315Z"
+            fill="url(#paint1_linear)"
+          />
+          <defs>
+            <linearGradient
+              id="paint0_linear"
+              x1="26.8048"
+              y1="28.4768"
+              x2="11.7952"
+              y2="19.8445"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stop-color="white" stop-opacity="0.4" />
+              <stop offset="1" stop-color="white" />
+            </linearGradient>
+            <linearGradient
+              id="paint1_linear"
+              x1="5.19119"
+              y1="2.51384"
+              x2="20.2007"
+              y2="11.1462"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop
+                offset="0.000329443"
+                stop-color="white"
+                stop-opacity="0.5"
+              />
+              <stop offset="1" stop-color="white" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="logo"> Edura </span>
+      </div>
+      <div class="flex flex-row lg:flex-col gap-2">
         {% if session['user_type'] == 'student' %}
-        <div class="transition-all w-full my-8">
+        <div class="transition-all w-full lg:my-8">
           {% if not session['start_study_time'] %}
           <div
             class="peer font-bold rounded-full bg-blue-500 px-2 py-1 flex justify-between w-28 cursor-pointer"
@@ -125,7 +189,7 @@
               d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25"
             />
           </svg>
-          Dashboard</a
+          <div class="hidden lg:block">Dashboard</div></a
         >
         {% if session['user_type'] == 'student' %}
         <a
@@ -145,7 +209,7 @@
               d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"
             />
           </svg>
-          Sessions</a
+          <div class="hidden lg:block">Sessions</div></a
         >
         {% endif %}
         <a
@@ -170,10 +234,10 @@
               d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
             />
           </svg>
-          Settings</a
+          <div class="hidden lg:block">Settings</div></a
         >
 
-        <a class="flex gap-2 opacity-50 px-2 py-2"
+        <a class="gap-2 opacity-50 px-2 py-2 hidden lg:flex"
           ><svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -207,7 +271,7 @@
               d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15"
             />
           </svg>
-          Log out</a
+          <div class="hidden lg:block">Log out</div></a
         >
       </div>
     </nav>
@@ -230,7 +294,7 @@
       {% endif %} {% endfor %}
     </div>
     {% endif %} {% endwith %}
-    <div class="lg:ml-52 lg:mr-24 lg:my-12 ml-48 w-full">
+    <div class="lg:ml-52 lg:mr-24 lg:my-12 lg:ml-48 mt-12 w-full mx-4">
       {% block body %} {% endblock %}
     </div>
     <div
@@ -349,5 +413,14 @@
         }
       }
     </script>
+    <style>
+      .logo {
+        font-family: "Merriweather Sans", sans-serif;
+        letter-spacing: -1px;
+        font-size: 24px;
+        padding-top: auto;
+        padding-bottom: auto;
+      }
+    </style>
   </body>
 </html>

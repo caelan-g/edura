@@ -1,19 +1,116 @@
 {% extends "layouts/layout_base.html" %} {% block body %}
-<div class="w-full">
-  <div class="text-5xl font-bold my-12">Landing page!!</div>
-  <a href="/login" class="bg-gray-800 rounded-md p-3 font-bold text-white"
-    >Login</a
-  >
-  <a
-    href="{{ url_for('register', user_type='student') }}"
-    class="bg-blue-800 rounded-md p-3 font-bold text-white"
-    >Register Student</a
-  >
-  <a
-    href="{{ url_for('register', user_type='teacher') }}"
-    class="bg-yellow-800 rounded-md p-3 font-bold text-white"
-    >Register Teacher</a
-  >
+<img
+  src="{{ url_for('static', filename='images/mesh.png') }}"
+  class="absolute -top-[22rem] left-0 -z-10"
+/>
+<img
+  src="{{ url_for('static', filename='images/mesh.png') }}"
+  class="absolute -top-[22rem] left-0 opacity-20 pointer-events-none"
+/>
+<div class="flex flex-row mt-20 mb-4">
+  <div class="w-[40rem]">
+    <div class="text-8xl tracking-tighter font-bold">
+      Education infrastructure <br />
+      to
+      <span id="typing-text" class=""></span>
+      <span class="animate-blink relative left-[-.7rem] top-[-.2rem]">|</span>
+      <br />
+      your class
+    </div>
+    <div class="text-lg text-gray-700 mt-8 mb-6">
+      Monitor study sessions and progress, allowing students to view their study
+      habits and performance data. Boost learning, track improvement, and
+      optimise for academic success.
+    </div>
+    <div class="flex flex-row gap-2">
+      <a
+        href="/register"
+        class="bg-gray-800 rounded-md p-2 px-3 font-bold text-white flex flex-row hover:bg-gray-700 transition-all group"
+        >Get Started
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="3"
+          stroke="currentColor"
+          class="size-4 relative top-[.28rem] left-[.1rem] group-hover:translate-x-1 transition-all ease-in-out"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="m8.25 4.5 7.5 7.5-7.5 7.5"
+          /></svg
+      ></a>
+      <a href="/login" class="font-bold p-2 flex flex-row transition-all group"
+        >Sign In
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="3"
+          stroke="currentColor"
+          class="size-4 relative top-[.28rem] left-[.1rem] group-hover:translate-x-1 transition-all ease-in-out"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="m8.25 4.5 7.5 7.5-7.5 7.5"
+          /></svg
+      ></a>
+    </div>
+  </div>
+  <div class="z-50 min-w-[35rem] text-left"></div>
 </div>
+
+<a
+  href="/register"
+  class="bg-yellow-800 rounded-md p-3 font-bold text-white hidden"
+  >Register Teacher</a
+>
+
+<style>
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  .animate-blink {
+    animation: blink 0.8s infinite;
+  }
+</style>
+
+<script defer>
+  document.addEventListener("DOMContentLoaded", () => {
+    const words = ["redefine ", "boost ", "improve ", "elevate ", "track "];
+    let wordIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    const speed = 100;
+    const delay = 1500;
+    const typingElement = document.getElementById("typing-text");
+
+    function typeEffect() {
+      const currentWord = words[wordIndex];
+      if (isDeleting) {
+        typingElement.textContent = currentWord.substring(0, charIndex--);
+      } else {
+        typingElement.textContent = currentWord.substring(0, charIndex++);
+      }
+
+      if (!isDeleting && charIndex === currentWord.length) {
+        isDeleting = true;
+        setTimeout(typeEffect, delay);
+      } else if (isDeleting && charIndex === 0) {
+        isDeleting = false;
+        wordIndex = (wordIndex + 1) % words.length;
+        setTimeout(typeEffect, 300);
+      } else {
+        setTimeout(typeEffect, isDeleting ? speed / 2 : speed);
+      }
+    }
+
+    typeEffect();
+  });
+</script>
 
 {% endblock %}

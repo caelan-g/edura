@@ -1,12 +1,12 @@
 {% extends "layouts/layout_base.html" %} {% block body %}
 <div class="lg:w-[23rem] my-20 mx-auto text-center">
   <div
-    class="rounded-md py-12 px-8 flex gap-6 flex-col lg:border lg:border-gray-100 lg:shadow-md"
+    class="rounded-md py-12 px-8 flex gap-6 flex-col lg:border lg:border-gray-100 lg:shadow-md bg-white"
   >
     <div>
       <div class="text-5xl font-bold lg:text-left lg:text-4xl">Register</div>
-      <div class="text-xl pt-2 lg:text-left lg:text-base">
-        Create a {{session['user_type']}} account
+      <div class="text-xl pb-2 lg:text-left lg:text-base text-gray-700">
+        Get started and create an account
       </div>
     </div>
 
@@ -15,6 +15,36 @@
       method="post"
       class="flex flex-col gap-6 w-full text-xl lg:text-base"
     >
+      <div class="flex flex-row gap-2 w-full">
+        <label class="rounded-md cursor-pointer grow border">
+          <input
+            type="radio"
+            name="type"
+            value="teacher"
+            class="hidden peer"
+            checked
+          />
+          <div
+            class="w-full rounded-md peer-checked:font-bold p-3 transition-all peer-checked:bg-blue-400 peer-checked:text-white"
+          >
+            Teacher
+          </div>
+        </label>
+        <label class="rounded-md cursor-pointer grow border">
+          <input
+            type="radio"
+            name="type"
+            value="student"
+            class="hidden peer"
+            checked
+          />
+          <div
+            class="w-full rounded-md p-3 transition-all peer-checked:bg-blue-400 peer-checked:text-white peer-checked:font-bold transition-all"
+          >
+            Student
+          </div>
+        </label>
+      </div>
       <input
         name="username"
         placeholder="Username"
@@ -38,12 +68,12 @@
       />
       <button
         type="submit"
-        class="bg-gray-800 rounded-md p-3 font-bold text-white"
+        class="bg-gray-800 rounded-md p-3 font-bold text-white hover:bg-gray-700 transition-all"
       >
         Register
       </button>
     </form>
-    <div class="text-xl lg:text-base">
+    <div class="text-xl lg:text-sm text-gray-500 mt-4">
       Already have an account? <a href="/login" class="font-bold">Login</a>
     </div>
   </div>

@@ -3,6 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Merriweather+Sans:ital,wght@0,800;1,800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Merriweather+Sans:ital,wght@0,800;1,800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="{{ url_for('static', filename='logo-blue.svg') }}"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
     <!--
     <link
@@ -11,22 +28,51 @@
       href="{{ url_for('static', filename='tailwind.min.css')}}"
     />
     -->
-    <title>Join Study App</title>
+    <title>Edura</title>
   </head>
-  <body class="">
+  <body class="z-50">
+    <img
+      src="{{ url_for('static', filename='images/mesh.png') }}"
+      class="absolute -top-[22rem] left-0 -z-10"
+    />
     <div
       class="font-bold p-2 w-full flex flex-row justify-between gap-12 lg:px-48"
     >
-      <a href="/">Study App</a>
-      <a href="{{ url_for('register', user_type='student') }}"
-        >Register for Students</a
-      >
-      <a href="{{ url_for('register', user_type='teacher') }}"
-        >Register for Teachers</a
-      >
-      <a href="/login" class="bg-gray-800 text-white rounded-full px-2 py-1"
-        >Login</a
-      >
+      <a href="/" class="logo">Edura</a>
+      <div class="flex flex-row gap-2 z-50">
+        <a href="/login" class="p-2 flex flex-row transition-all group"
+          >Sign In<svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="3"
+            stroke="currentColor"
+            class="size-4 relative top-[.28rem] left-[.1rem] group-hover:translate-x-1 transition-all ease-in-out"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="m8.25 4.5 7.5 7.5-7.5 7.5"
+            /></svg
+        ></a>
+        <a
+          href="/register"
+          class="bg-gray-800 text-white rounded-md p-2 px-3 flex flex-row hover:bg-gray-700 transition-all group"
+          >Get Started<svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="3"
+            stroke="currentColor"
+            class="size-4 relative top-[.28rem] left-[.1rem] group-hover:translate-x-1 transition-all ease-in-out"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="m8.25 4.5 7.5 7.5-7.5 7.5"
+            /></svg
+        ></a>
+      </div>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %} {% if
     messages %}
@@ -59,5 +105,14 @@
         }, 2000);
       };
     </script>
+    <style>
+      .logo {
+        font-family: "Merriweather Sans", sans-serif;
+        letter-spacing: -1px;
+        font-size: 24px;
+        padding-top: auto;
+        padding-bottom: auto;
+      }
+    </style>
   </body>
 </html>

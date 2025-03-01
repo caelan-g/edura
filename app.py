@@ -17,18 +17,14 @@ import re
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from math import pi
-
-import numpy as np
-from scipy.interpolate import CubicSpline
+import pyotp
+import qrcode
 
 #TO DO LIST
-### 2fac auth
 ### settings completion (can edit etc)
 ### join code revamp - only on first page reload, clear on logout
-### landing page revamp
 ### footer(s)
 ### RESPONSIVE!!
-### final ui - (icon, logo, class customization)
 ### internal documentation
 ### mock data
 
@@ -36,6 +32,8 @@ app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET_KEY")
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=120)
 COLOURS = ['lightsteelblue', 'powderblue', 'lightblue', 'skyblue', 'lightskyblue', 'steelblue', 'cornflowerblue']
+TYPES = ['teacher', 'student']
+skip_mfa = True
 
 app.config.update(
     SESSION_COOKIE_SECURE=True,  # Enforces HTTPS for session cookies
@@ -51,15 +49,17 @@ def init_db():
         student_id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        name TEXT NOT NULL
+        name TEXT NOT NULL,
+        mfa_secret TEXT
         )
         ''')
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS teachers(
         teacher_id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        name TEXT NOT NULL
+        password TEXT NOT NULL,        
+        name TEXT NOT NULL,
+        mfa_secret TEXT
         )
         ''')
     cursor.execute('''
@@ -294,7 +294,8 @@ def duration_filter(start_time, end_time, type='readable'):
     end_time = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S.%f")
     total_seconds = (end_time - start_time).total_seconds()
     hours =  total_seconds / 3600
-    minutes = round((hours - round(hours, 0)) * 60, 0)
+    minutes = round((hours - math.floor(hours)) * 60, 0)
+    print(minutes)
     if type == 'seconds':
         return total_seconds
     elif type == 'readable':
@@ -345,26 +346,31 @@ def register():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+        type = request.form.get("type")
         name = request.form.get("name")
         hashed_password = generate_password_hash(password)
         conn = sqlite3.connect('study_app.db')
         cursor = conn.cursor()
         if is_valid(username) and is_valid(password):
-            if find_duplicate(cursor, username):
-                flash('Username already exists', 'error')
-            else:
-                if session['user_type'] == 'teacher':
-                    cursor.execute("INSERT INTO teachers (username, password, name) VALUES (?, ?, ?)", (username, hashed_password, name))
-                    conn.commit()
-                    flash('Registration successful. Please login', 'success')
-                    conn.close()
-                    return redirect('/login')
+            if type in TYPES:
+                if find_duplicate(cursor, username):
+                    flash('Username already exists', 'error')
                 else:
-                    cursor.execute("INSERT INTO students (username, password, name) VALUES (?, ?, ?)", (username, hashed_password, name))
-                    conn.commit()
-                    flash('Registration successful. Please login', 'success')
-                    conn.close()
-                    return redirect('/login')
+                    if type == 'teacher':
+                        cursor.execute("INSERT INTO teachers (username, password, name) VALUES (?, ?, ?)", (username, hashed_password, name))
+                        conn.commit()
+                        flash('Registration successful. Please login', 'success')
+                        conn.close()
+                        return redirect('/login')
+                    else:
+                        cursor.execute("INSERT INTO students (username, password, name) VALUES (?, ?, ?)", (username, hashed_password, name))
+                        conn.commit()
+                        flash('Registration successful. Please login', 'success')
+                        conn.close()
+                        return redirect('/login')
+            else:
+                flash('Invalid type', 'error')
+                return redirect('/register')
         else:
             flash('Please enter a valid username or password', 'error')
             return redirect('/register')
@@ -373,7 +379,7 @@ def register():
         session['user_type'] = 'teacher'
     else:
         session['user_type'] = 'student'
-    return render_template('register.html')
+    return render_template('register.html', types=TYPES)
 
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("20 per minute")
@@ -390,29 +396,133 @@ def login():
             teacher_record = cursor.fetchone()
             conn.close()
             if student_record and check_password_hash(student_record[2], password): #user is array from database - password is in 3rd slot (begins from 0)
-                session['user_id'] = student_record[0]
-                session['username'] = student_record[1]
-                session['name'] = student_record[3]
                 session['user_type'] = 'student'
+                session['pending_user'] = student_record[0]
+                if not student_record[4]:
+                    flash('Login successful', 'success')
+                    return redirect('/skip_mfa')
+                else:
+                    return redirect('/verify_mfa')
+            elif teacher_record and check_password_hash(teacher_record[2], password):
+                session['pending_user'] = teacher_record[0]
+                session['user_type'] = 'teacher'
+                if not teacher_record[4]:
+                    flash('Login successful', 'success')
+                    return redirect('/skip_mfa')
+                else:
+                    return redirect('/verify_mfa')
+            flash("Your username or password don't match our records", 'error')
+        else:
+            flash('Please enter a valid username or password', 'error')
+    return render_template('login.html')
+
+@app.route('/setup_mfa')
+def setup_mfa():
+    user_id = session.get('user_id')
+    conn = sqlite3.connect('study_app.db')
+    cursor = conn.cursor()
+    
+    if session.get('user_type') == 'teacher':
+        cursor.execute("SELECT mfa_secret FROM teachers WHERE teacher_id = ?", (user_id,))
+    else:
+        cursor.execute("SELECT mfa_secret FROM students WHERE student_id = ?", (user_id,))
+
+    secret = cursor.fetchone()
+    if secret:
+        secret = secret[0]  # Extract actual value
+
+    # Generate secret if not set
+    if not secret:
+        secret = pyotp.random_base32()
+        if session['user_type'] == 'teacher':
+            cursor.execute("UPDATE teachers SET mfa_secret = ? WHERE teacher_id = ?", (secret, user_id))
+        else:
+            cursor.execute("UPDATE students SET mfa_secret = ? WHERE student_id = ?", (secret, user_id))
+        conn.commit()
+
+    conn.close()
+
+    # Test TOTP to ensure the secret is valid
+    totp = pyotp.TOTP(secret)
+    print("Test OTP Code:", totp.now())  # Debugging: Should generate a valid OTP
+
+    # Generate QR Code
+    uri = totp.provisioning_uri(name=f"user{user_id}@studyapp.com", issuer_name="Study App Software")
+    qr = qrcode.make(uri)
+    qr_path = "static/images/qrcode.png"
+    qr.save(qr_path)
+
+    return render_template("setup-mfa.html", qr_path=qr_path)
+
+@app.route('/skip_mfa')
+def skip_mfa():
+    if session['pending_user']:
+        conn = sqlite3.connect('study_app.db')
+        cursor = conn.cursor()
+        user_id = session['pending_user']
+        session['user_id'] = user_id
+        if session['user_type'] == 'student':
+            cursor.execute("SELECT * FROM students WHERE student_id = ?", (user_id,))
+            student_record = cursor.fetchone()
+            session['username'] = student_record[1]
+            session['start_study_time'] = None
+            session['study_class_id'] = None
+            session['timer_sec'] = 0
+            session['timer_min'] = 0
+            session['timer_hr'] = 0
+        else:
+            cursor.execute("SELECT * FROM teachers WHERE teacher_id = ?", (user_id,))
+            teacher_record = cursor.fetchone()
+            session['username'] = teacher_record[1]
+        
+        session['csrf_token'] = str(uuid.uuid4())  # Add a CSRF token
+        del session['pending_user']
+        return redirect('/dashboard')
+    else:
+        flash('Please login to continue')
+        session.clear()
+        return redirect('/login')
+
+@app.route('/verify_mfa', methods=['GET', 'POST'])
+def verify_mfa():
+    if 'pending_user' not in session:
+        return redirect('/login')
+    user_id = session['pending_user']
+    if request.method == 'POST':
+        # Retrieves the code from the text box
+        otp_code = request.form['otp']
+        conn = sqlite3.connect('study_app.db')
+        cursor = conn.cursor()
+        if session['user_type'] == 'teacher':
+            cursor.execute("SELECT mfa_secret FROM teachers WHERE teacher_id = ?", (user_id,))
+        else:
+            cursor.execute("SELECT mfa_secret FROM students WHERE student_id = ?", (user_id,))
+        secret = cursor.fetchone()[0]
+        totp = pyotp.TOTP(secret)
+        # Compares the input code to the database 
+        if totp.verify(otp_code):
+            if session['user_type'] == 'student':
+                cursor.execute("SELECT * FROM students WHERE student_id = ?", (user_id,))
+                student_record = cursor.fetchone()
+                session['user_id'] = user_id
+                session['username'] = student_record[1]
                 session['start_study_time'] = None
                 session['study_class_id'] = None
                 session['timer_sec'] = 0
                 session['timer_min'] = 0
                 session['timer_hr'] = 0
-                session['csrf_token'] = str(uuid.uuid4())  # Add a CSRF token
-                flash('Login successful', 'success')
-                return redirect('/dashboard')
-            elif teacher_record and check_password_hash(teacher_record[2], password):
-                session['user_id'] = teacher_record[0]
+            else:
+                cursor.execute("SELECT * FROM teachers WHERE teacher_id = ?", (user_id,))
+                teacher_record = cursor.fetchone()
                 session['username'] = teacher_record[1]
-                session['name'] = teacher_record[3]
-                session['user_type'] = 'teacher'
-                flash('Login successful', 'success')
-                return redirect('/dashboard')
-            flash("Your username or password don't match our records", 'error')
-        else:
-            flash('Please enter a valid username or password', 'error')
-    return render_template('login.html')
+            
+            session['csrf_token'] = str(uuid.uuid4())  # Add a CSRF token
+            del session['pending_user']
+            conn.close()
+            flash('Login successful', 'success')
+            return redirect('/dashboard')
+        flash("Invalid 2FA code", "error")
+    return render_template("verify-mfa.html")
 
 @app.route('/dashboard', methods=["GET"])
 def dashboard():
@@ -445,9 +555,15 @@ def dashboard():
                 ''', (session['user_id'],))
             classes = cursor.fetchall()
             
-            cursor.execute("SELECT * FROM study_sessions WHERE student_id = ? LIMIT 5", (session['user_id'],))
+            cursor.execute("SELECT * FROM study_sessions WHERE student_id = ? ORDER BY start_time DESC LIMIT 5", (session['user_id'],))
             sessions = cursor.fetchall()
             
+            cursor.execute("SELECT * FROM students WHERE student_id = ?", (session['user_id'],))
+            student_data = cursor.fetchall()[0]
+            
+            total_study_time = cursor.fetchall()
+            
+            class_name_truncated = []
             class_name = []
             colour_data = []
             
@@ -455,23 +571,26 @@ def dashboard():
                 k = int(round(1/len(classes) * 100, 0))
                 #print(k)
                 for i in classes:
+                    class_name.append(i[1])
                     if len(i[1]) > k:
                         new = i[1][:k] + '...'
-                        class_name.append(new)
+                        class_name_truncated.append(new)
                     else:
-                        class_name.append(i[1])
+                        class_name_truncated.append(i[1])
                     colour_data.append(i[2])
-                bar_script, bar_div = render_bar_graph(class_name, time_data, colour_data)
+                bar_script, bar_div = render_bar_graph(class_name_truncated, time_data, colour_data)
                 donut_script, donut_div = render_donut_graph(class_name, time_data, colour_data)
             else:
                 bar_script, bar_div = None, None
             resources = INLINE.render()
-            return render_template('dashboard.html', colours=COLOURS, classes=classes, bar_script=bar_script, bar_div=bar_div, donut_script=donut_script, donut_div=donut_div, resources=resources, sessions=sessions)  
+            return render_template('dashboard.html', user_data=student_data, colours=COLOURS, classes=classes, bar_script=bar_script, bar_div=bar_div, donut_script=donut_script, donut_div=donut_div, resources=resources, sessions=sessions)  
         else:
             cursor.execute("SELECT * FROM classes WHERE teacher_id = ?", (session['user_id'],))
             classes = cursor.fetchall()
+            cursor.execute("SELECT * FROM teachers WHERE teacher_id = ?", (session['user_id'],))
+            teacher_data = cursor.fetchall()[0]
             conn.close()
-            return render_template('dashboard.html', colours=COLOURS, classes=classes)
+            return render_template('dashboard.html', user_data=teacher_data, colours=COLOURS, classes=classes)
         
     else:
         flash('Please login to continue')
@@ -889,6 +1008,55 @@ def update_session():
         else:
             flash('Invalid class, student or session id', 'error')
             return redirect('/dashboard')
+    else:
+        flash('Please login to continue', 'error')
+        return redirect('/login')
+    
+@app.route('/update_username', methods=['POST'])
+def update_username():
+    if verify():
+        username = request.form.get('username')
+        print(username)
+        if is_valid(username):
+            user_id = session['user_id']
+            conn = sqlite3.connect('study_app.db')
+            cursor = conn.cursor()
+            if session['user_type'] == 'teacher':
+                cursor.execute('UPDATE teachers SET username = ? WHERE teacher_id = ?', (username, user_id))
+            else:
+                cursor.execute('UPDATE students SET username = ? WHERE student_id = ?', (username, user_id))
+            conn.commit()
+            conn.close()
+            session['username'] = username
+            flash('Username successfully updated', 'success')
+            return redirect('/settings')
+        else:
+            flash('Invalid username', 'error')
+            return redirect('/settings')
+    else:
+        flash('Please login to continue', 'error')
+        return redirect('/login')
+
+@app.route('/update_display_name', methods=['POST'])
+def update_display_name():
+    if verify():
+        display_name = request.form.get('display_name')
+        print(display_name)
+        if is_valid(display_name):
+            user_id = session['user_id']
+            conn = sqlite3.connect('study_app.db')
+            cursor = conn.cursor()
+            if session['user_type'] == 'teacher':
+                cursor.execute('UPDATE teachers SET name = ? WHERE teacher_id = ?', (display_name, user_id))
+            else:
+                cursor.execute('UPDATE students SET name = ? WHERE student_id = ?', (display_name, user_id))
+            conn.commit()
+            conn.close()            
+            flash('Display name successfully updated', 'success')
+            return redirect('/settings')
+        else:
+            flash('Invalid display name', 'error')
+            return redirect('/settings')
     else:
         flash('Please login to continue', 'error')
         return redirect('/login')

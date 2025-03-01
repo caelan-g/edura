@@ -1,0 +1,12 @@
+{% extends "layouts/layout_user.html" %} {% block body %}
+<div
+  class="bg-white rounded-md lg:border lg:border-gray-100 lg:shadow-md p-4 mr-auto flex flex-col w-[35rem]"
+>
+  <div class="text-2xl font-bold">Scan QR Code</div>
+  <div class="">
+    Scan with Microsoft Authenticator and enter the 6-digit code at login.
+  </div>
+  <img src="{{ qr_path }}" alt="QR Code" />
+</div>
+
+{% endblock %}

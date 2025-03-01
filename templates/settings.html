@@ -1,17 +1,51 @@
 {% extends "layouts/layout_user.html" %} {% block body %}
-<div class="w-[40rem] mx-12">
+<div class="lg:w-[40rem] w-full">
   <div class="text-4xl font-bold">Settings</div>
   <div class="flex flex-col gap-6 my-4">
+    {% if not user_data[4] %}
+
+    <div
+      class="bg-red-100 p-2 rounded-md font-bold flex flex-row text-red-800 mr-auto pr-3"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="2"
+        stroke="currentColor"
+        class="size-6 mr-2"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+        />
+      </svg>
+      Multi-Factor Authentication is not enabled.
+      <a href="/setup_mfa" class="underline ml-1">Set up</a>
+    </div>
+    {% endif %}
     <div class="flex flex-row justify-between border-y py-4">
       <div class="flex flex-col">
         <div class="font-bold">Display Name</div>
         <div id="display_show" class="py-2">{{user_data[3]}}</div>
-        <input
+        <form
+          action="/update_display_name"
+          class="flex flex-row hidden gap-2"
           id="display_input"
-          value="{{user_data[3]}}"
-          type="text"
-          class="hidden px-3 py-2 rounded-md border border-gray-300 text-gray-700"
-        />
+          method="post"
+        >
+          <input
+            value="{{user_data[3]}}"
+            type="text"
+            name="display_name"
+            autofocus
+            class="px-3 py-2 rounded-md border border-gray-300 text-gray-700"
+          />
+          <button class="bg-gray-800 text-white font-bold p-2 rounded-md">
+            Save
+          </button>
+        </form>
       </div>
       <div
         onclick="edit('display')"
@@ -24,12 +58,23 @@
       <div class="flex flex-col">
         <div class="font-bold">Username</div>
         <div id="username_show" class="py-2">{{user_data[1]}}</div>
-        <input
+        <form
+          action="/update_username"
+          class="flex flex-row hidden gap-2"
           id="username_input"
-          value="{{user_data[1]}}"
-          type="text"
-          class="hidden px-3 py-2 rounded-md border border-gray-300 text-gray-700"
-        />
+          method="post"
+        >
+          <input
+            value="{{user_data[1]}}"
+            type="text"
+            name="username"
+            autofocus
+            class="px-3 py-2 rounded-md border border-gray-300 text-gray-700"
+          />
+          <button class="bg-gray-800 text-white font-bold p-2 rounded-md">
+            Save
+          </button>
+        </form>
       </div>
       <div
         onclick="edit('username')"
@@ -47,8 +92,9 @@
         class="cursor-not-allowed bg-gray-200 px-3 py-2 rounded-md border border-gray-300 text-gray-700"
       />
     </div>
-    <button
+    <a
       class="bg-red-100 font-bold rounded-md py-2 px-4 flex flex-row justify-center cursor-pointer mb-2 text-red-800 w-60 mt-12"
+      href=""
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -65,7 +111,7 @@
       <div class="text-ellipsis overflow-hidden text-nowrap">
         Delete your account?
       </div>
-    </button>
+    </a>
   </div>
 </div>
 
