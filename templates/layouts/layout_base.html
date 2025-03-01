@@ -33,10 +33,10 @@
   <body class="z-50">
     <img
       src="{{ url_for('static', filename='images/mesh.png') }}"
-      class="absolute -top-[22rem] left-0 -z-10"
+      class="absolute lg:-top-[22rem] left-0 -z-10 lg:block hidden"
     />
     <div
-      class="font-bold p-2 w-full flex flex-row justify-between gap-12 lg:px-48"
+      class="font-bold p-4 w-full flex flex-row justify-between gap-12 lg:px-48"
     >
       <a href="/" class="logo">Edura</a>
       <div class="flex flex-row gap-2 z-50">
@@ -93,7 +93,7 @@
       {% endif %} {% endfor %}
     </div>
     {% endif %} {% endwith %}
-    <div class="lg:px-48">
+    <div class="lg:px-48 px-4">
       <div>{% block body %} {% endblock %}</div>
     </div>
     <script>

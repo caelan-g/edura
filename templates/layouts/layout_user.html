@@ -21,8 +21,6 @@
       href="{{ url_for('static', filename='logo-blue.svg') }}"
     />
     <script src="https://cdn.tailwindcss.com"></script>
-    {% if session['page'] == 'dashboard' and session['user_type'] == 'student'
-    %} {% endif %}
     <title>Study App</title>
     <!--<link
       rel="stylesheet"
@@ -32,9 +30,9 @@
   </head>
   <body class="flex flex-col lg:flex-row lg:bg-gray-50">
     <nav
-      class="bg-gray-800 text-white font-bold p-2 flex flex-row lg:flex-col align-middle lg:h-full fixed lg:w-48 lg:pt-24 lg:pb-20 lg:gap-10 w-full"
+      class="z-10 bg-gray-800 text-white font-bold p-2 px-4 lg:px-2 flex flex-row lg:flex-col align-middle lg:h-full fixed lg:w-48 lg:pt-24 lg:pb-20 lg:gap-10 w-full"
     >
-      <div class="text-3xl px-2 flex flex-row gap-1">
+      <div class="text-3xl px-2 flex-row gap-1 hidden lg:flex">
         <svg
           width="16"
           height="16"
@@ -82,12 +80,12 @@
         </svg>
         <span class="logo"> Edura </span>
       </div>
-      <div class="flex flex-row lg:flex-col gap-2">
+      <div class="flex flex-row lg:flex-col gap-2 w-full justify-between">
         {% if session['user_type'] == 'student' %}
-        <div class="transition-all w-full lg:my-8">
+        <div class="transition-all lg:w-full lg:my-8">
           {% if not session['start_study_time'] %}
           <div
-            class="peer font-bold rounded-full bg-blue-500 px-2 py-1 flex justify-between w-28 cursor-pointer"
+            class="peer font-bold rounded-full bg-blue-500 px-2 py-2 lg:py-1 flex justify-between w-28 cursor-pointer"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -174,7 +172,7 @@
         {% endif %}
         <a
           href="/dashboard"
-          class="flex gap-2 {% if session['page'] == 'dashboard' %} bg-gray-700 {% endif %} hover:bg-gray-700 transition-all px-2 py-2 rounded-md"
+          class="hidden lg:flex gap-2 {% if session['page'] == 'dashboard' %} bg-gray-700 {% endif %} hover:bg-gray-700 transition-all px-2 py-2 rounded-md"
           ><svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -194,7 +192,7 @@
         {% if session['user_type'] == 'student' %}
         <a
           href="/sessions"
-          class="flex gap-2 {% if session['page'] == 'sessions' %} bg-gray-700 {% endif %} hover:bg-gray-700 transition-all px-2 py-2 rounded-md"
+          class="hidden lg:flex gap-2 {% if session['page'] == 'sessions' %} bg-gray-700 {% endif %} hover:bg-gray-700 transition-all px-2 py-2 rounded-md"
           ><svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -214,7 +212,7 @@
         {% endif %}
         <a
           href="/settings"
-          class="flex gap-2 {% if session['page'] == 'settings' %} bg-gray-700 {% endif %} hover:bg-gray-700 transition-all px-2 py-2 rounded-md"
+          class="hidden lg:flex gap-2 {% if session['page'] == 'settings' %} bg-gray-700 {% endif %} hover:bg-gray-700 transition-all px-2 py-2 rounded-md"
           ><svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -256,7 +254,7 @@
         >
         <a
           href="/logout"
-          class="flex gap-2 px-2 py-2 hover:bg-gray-700 transition-all rounded-md"
+          class="hidden lg:flex gap-2 px-2 py-2 hover:bg-gray-700 transition-all rounded-md"
           ><svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -273,6 +271,25 @@
           </svg>
           <div class="hidden lg:block">Log out</div></a
         >
+        <a
+          onclick="navToggle()"
+          class="flex lg:hidden gap-2 px-2 py-2 transition-all ease-in-out rounded-md"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            class="size-6 relative top-[0.1em]"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+            />
+          </svg>
+        </a>
       </div>
     </nav>
     {% with messages = get_flashed_messages(with_categories=true) %} {% if
@@ -294,7 +311,7 @@
       {% endif %} {% endfor %}
     </div>
     {% endif %} {% endwith %}
-    <div class="lg:ml-52 lg:mr-24 lg:my-12 lg:ml-48 mt-12 w-full mx-4">
+    <div class="lg:ml-52 lg:mr-24 lg:my-12 px-4 lg:ml-48 mt-20 lg:mt-12 w-full">
       {% block body %} {% endblock %}
     </div>
     <div
@@ -325,7 +342,41 @@
         </form>
       </div>
     </div>
+    <div
+      id="menu"
+      class="top-0 left-0 flex flex-col w-full h-full z-50 bg-white opacity-0 pointer-events-none transition-all px-4 py-4 fixed"
+    >
+      <div class="flex flex-row w-full justify-between">
+        <div class="logo">Endura</div>
+        <div id="close-button" onclick="navToggle()">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            class="size-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M6 18 18 6M6 6l12 12"
+            />
+          </svg>
+        </div>
+      </div>
+      <div class="mt-24 flex flex-col gap-12 text-xl font-bold">
+        <a href="/dashboard">Dashboard</a>
+        {% if session['user_type'] == 'student' %}
+        <a href="/sessions">Sessions</a>
+        {% endif %}
+        <a href="/settings">Settings</a>
+        <a href="/logout">Logout</a>
+      </div>
+    </div>
     <script>
+      const menu = document.getElementById("menu");
+
       window.onload = function () {
         messagePopup = document.getElementById("message");
         messagePopup.classList.remove("translate-y-[-5rem]");
@@ -333,6 +384,16 @@
           messagePopup.classList.add("translate-y-[-5rem]");
         }, 2000);
       };
+
+      function navToggle() {
+        if (menu.classList.contains("opacity-0")) {
+          menu.classList.add("opacity-100");
+          menu.classList.remove("opacity-0", "pointer-events-none");
+        } else {
+          menu.classList.add("opacity-0", "pointer-events-none");
+          menu.classList.remove("opacity-100");
+        }
+      }
     </script>
     <script defer>
       let timer = false;
@@ -342,6 +403,7 @@
       let secondString;
       let minuteString;
       let hourString;
+
       startTimer();
 
       function startTimer() {

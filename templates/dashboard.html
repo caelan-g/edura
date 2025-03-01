@@ -1,5 +1,7 @@
 {% extends "layouts/layout_user.html" %} {% block body %}
-<div class="text-5xl font-bold mb-2 w-full text-ellipsis overflow-hidden">
+<div
+  class="text-4xl lg:text-5xl font-bold mb-2 w-full text-ellipsis overflow-hidden"
+>
   {{user_data[3]}}'s Dashboard
 </div>
 
@@ -26,7 +28,7 @@
       <div class="text-2xl font-bold mb-2">Recent Sessions</div>
       {% for session in sessions %}
       <div
-        class="flex flex-col mx-4 py-4 border-t {%if loop.last %} border-b {% endif %}"
+        class="flex flex-col lg:mx-4 py-4 border-t {%if loop.last %} border-b {% endif %}"
       >
         <div class="flex flex-row gap-2 justify-between items-end">
           <div
@@ -138,7 +140,8 @@
     onclick="popup('class_popup')"
     class="flex flex-row relative bg-gray-800 rounded-md p-2 text-white text-xl cursor-pointer"
   >
-    Create Class
+    <span class="hidden lg:block">Create Class</span>
+
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
@@ -155,7 +158,7 @@
     </svg>
   </button>
 </div>
-<div class="grid grid-cols-3 gap-4 w-full mt-3">
+<div class="lg:grid lg:grid-cols-3 flex flex-col gap-4 w-full mt-3">
   {% for class in classes %}
   <a
     href="{{ url_for('view_class', class_id=class[0]) }}"

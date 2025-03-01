@@ -1,15 +1,19 @@
 {% extends "layouts/layout_base.html" %} {% block body %}
 <img
   src="{{ url_for('static', filename='images/mesh.png') }}"
-  class="absolute -top-[22rem] left-0 -z-10"
+  class="absolute lg:-top-[22rem] left-0 opacity-20 pointer-events-none hidden lg:block"
 />
 <img
   src="{{ url_for('static', filename='images/mesh.png') }}"
-  class="absolute -top-[22rem] left-0 opacity-20 pointer-events-none"
+  class="absolute lg:-top-[22rem] left-0 -z-10 hidden lg:block"
+/>
+<img
+  src="{{ url_for('static', filename='images/meshmobile.png') }}"
+  class="absolute -top-[.1rem] left-0 -z-10 lg:hidden"
 />
 <div class="flex flex-row mt-20 mb-4">
-  <div class="w-[40rem]">
-    <div class="text-8xl tracking-tighter font-bold">
+  <div class="w-full lg:w-[40rem]">
+    <div class="text-7xl lg:text-8xl tracking-tighter font-bold">
       Education infrastructure <br />
       to
       <span id="typing-text" class=""></span>
@@ -59,7 +63,7 @@
       ></a>
     </div>
   </div>
-  <div class="z-50 min-w-[35rem] text-left"></div>
+  <div class="z-50 lg:min-w-[35rem] text-left"></div>
 </div>
 
 <a

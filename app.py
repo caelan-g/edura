@@ -21,10 +21,10 @@ import pyotp
 import qrcode
 
 #TO DO LIST
-### settings completion (can edit etc)
+### settings completion - password
 ### join code revamp - only on first page reload, clear on logout
+### small ui changes (student has no classes, display join code enter only; display class name/colour in session; single digit code enter; )
 ### footer(s)
-### RESPONSIVE!!
 ### internal documentation
 ### mock data
 
@@ -33,7 +33,6 @@ app.secret_key = os.getenv("APP_SECRET_KEY")
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=120)
 COLOURS = ['lightsteelblue', 'powderblue', 'lightblue', 'skyblue', 'lightskyblue', 'steelblue', 'cornflowerblue']
 TYPES = ['teacher', 'student']
-skip_mfa = True
 
 app.config.update(
     SESSION_COOKIE_SECURE=True,  # Enforces HTTPS for session cookies
@@ -237,6 +236,13 @@ def render_donut_graph(name_list, data, colour_data):
     # Get Bokeh Components
     return components(plot)
 
+def clear_mfa(id):
+    conn = sqlite3.connect('study_app.db')
+    cursor = conn.cursor()
+    cursor.execute("UPDATE students SET mfa_secret = ? WHERE student_id = ?", (None, id))
+    conn.commit()
+    conn.close()  
+
 def convertToSeconds(timeString):
     #timeString is in the format hour:minutes:seconds with each taking up 2 length (if that makes sense)
     times = timeString.split(':')
@@ -270,6 +276,9 @@ def colourDictionary():
         "cornflowerblue": "bg-[#6495ED]"
     }
     
+def check_password(password):
+    return bool(re.search(r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)', password))
+    
 log = logging.getLogger("werkzeug")
 log.setLevel(logging.ERROR)
 logging.basicConfig(filename='record.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
@@ -295,7 +304,6 @@ def duration_filter(start_time, end_time, type='readable'):
     total_seconds = (end_time - start_time).total_seconds()
     hours =  total_seconds / 3600
     minutes = round((hours - math.floor(hours)) * 60, 0)
-    print(minutes)
     if type == 'seconds':
         return total_seconds
     elif type == 'readable':
@@ -346,27 +354,33 @@ def register():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+        second_password = request.form.get("second_password")
         type = request.form.get("type")
         name = request.form.get("name")
         hashed_password = generate_password_hash(password)
         conn = sqlite3.connect('study_app.db')
         cursor = conn.cursor()
-        if is_valid(username) and is_valid(password):
+        if is_valid(username) and is_valid(password) and ' ' not in username and ' ' not in password:
             if type in TYPES:
                 if find_duplicate(cursor, username):
                     flash('Username already exists', 'error')
+                elif not check_password(str(password)):
+                    flash('Password must contain 8 characters, an uppercase and lowercase letter and a number.', 'error')
+                elif password != second_password:
+                    flash('Passwords do not match', 'error')
                 else:
                     if type == 'teacher':
                         cursor.execute("INSERT INTO teachers (username, password, name) VALUES (?, ?, ?)", (username, hashed_password, name))
                         conn.commit()
-                        flash('Registration successful. Please login', 'success')
                         conn.close()
+                        flash("Welcome! Your account has been successfully created.", 'success')
+                        
                         return redirect('/login')
                     else:
                         cursor.execute("INSERT INTO students (username, password, name) VALUES (?, ?, ?)", (username, hashed_password, name))
                         conn.commit()
-                        flash('Registration successful. Please login', 'success')
                         conn.close()
+                        flash("Welcome! Your account has been successfully created.", 'success')
                         return redirect('/login')
             else:
                 flash('Invalid type', 'error')
@@ -444,7 +458,7 @@ def setup_mfa():
 
     # Test TOTP to ensure the secret is valid
     totp = pyotp.TOTP(secret)
-    print("Test OTP Code:", totp.now())  # Debugging: Should generate a valid OTP
+    
 
     # Generate QR Code
     uri = totp.provisioning_uri(name=f"user{user_id}@studyapp.com", issuer_name="Study App Software")
@@ -756,7 +770,7 @@ def view_class(class_id):
 def logout():
     session.clear()
     flash('You have been logged out', 'success')
-    return redirect('/')
+    return redirect('/login')
     
 @app.route('/settings', methods=['GET'])
 def settings():
@@ -1016,7 +1030,6 @@ def update_session():
 def update_username():
     if verify():
         username = request.form.get('username')
-        print(username)
         if is_valid(username):
             user_id = session['user_id']
             conn = sqlite3.connect('study_app.db')
@@ -1041,7 +1054,6 @@ def update_username():
 def update_display_name():
     if verify():
         display_name = request.form.get('display_name')
-        print(display_name)
         if is_valid(display_name):
             user_id = session['user_id']
             conn = sqlite3.connect('study_app.db')
@@ -1057,6 +1069,19 @@ def update_display_name():
         else:
             flash('Invalid display name', 'error')
             return redirect('/settings')
+    else:
+        flash('Please login to continue', 'error')
+        return redirect('/login')
+    
+@app.route('/cancel_mfa')
+def cancel_mfa():
+    if verify():
+        conn = sqlite3.connect('study_app.db')
+        cursor = conn.cursor()
+        cursor.execute("UPDATE students SET mfa_secret = ? WHERE student_id = ?", (None, session['user_id']))
+        conn.commit()
+        conn.close()  
+        return redirect('/dashboard')
     else:
         flash('Please login to continue', 'error')
         return redirect('/login')

@@ -4,8 +4,8 @@
     class="rounded-md py-12 px-8 flex gap-6 flex-col lg:border lg:border-gray-100 lg:shadow-md bg-white"
   >
     <div>
-      <div class="text-5xl font-bold lg:text-left lg:text-4xl">Register</div>
-      <div class="text-xl pb-2 lg:text-left lg:text-base text-gray-700">
+      <div class="text-4xl font-bold lg:text-left lg:text-4xl">Register</div>
+      <div class="text-md pb-2 lg:text-left lg:text-base text-gray-700">
         Get started and create an account
       </div>
     </div>
@@ -13,7 +13,7 @@
     <form
       action="/register"
       method="post"
-      class="flex flex-col gap-6 w-full text-xl lg:text-base"
+      class="flex flex-col gap-6 w-full text-md lg:text-base"
     >
       <div class="flex flex-row gap-2 w-full">
         <label class="rounded-md cursor-pointer grow border">
@@ -25,7 +25,7 @@
             checked
           />
           <div
-            class="w-full rounded-md peer-checked:font-bold p-3 transition-all peer-checked:bg-blue-400 peer-checked:text-white"
+            class="w-full rounded-md peer-checked:font-bold p-3 transition-all peer-checked:bg-gray-800 peer-checked:text-white"
           >
             Teacher
           </div>
@@ -39,7 +39,7 @@
             checked
           />
           <div
-            class="w-full rounded-md p-3 transition-all peer-checked:bg-blue-400 peer-checked:text-white peer-checked:font-bold transition-all"
+            class="w-full rounded-md p-3 transition-all peer-checked:bg-gray-800 peer-checked:text-white peer-checked:font-bold transition-all"
           >
             Student
           </div>
@@ -49,12 +49,18 @@
         name="username"
         placeholder="Username"
         type="text"
-        required
         class="p-3 rounded-md border"
       />
       <input
         name="password"
         placeholder="Password"
+        type="password"
+        required
+        class="p-3 rounded-md border"
+      />
+      <input
+        name="second_password"
+        placeholder="Re-enter password"
         type="password"
         required
         class="p-3 rounded-md border"
@@ -73,7 +79,7 @@
         Register
       </button>
     </form>
-    <div class="text-xl lg:text-sm text-gray-500 mt-4">
+    <div class="text-md lg:text-sm text-gray-500 mt-4">
       Already have an account? <a href="/login" class="font-bold">Login</a>
     </div>
   </div>
