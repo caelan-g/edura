@@ -5,7 +5,23 @@
   <div class="text-4xl font-bold">{{class_entity[1]}}</div>
   <div class="flex flex-row gap-2">
     <div class="flex flex-row gap-2">
-      <div class="text-md font-bold bg-gray-200 p-2 rounded-md">
+      <div class="text-md font-bold bg-gray-200 p-2 rounded-md flex gap-2">
+        <div class="cursor-pointer" onclick="joincodePopup()">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2.5"
+            stroke="currentColor"
+            class="size-5 relative mt-[.15rem]"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"
+            />
+          </svg>
+        </div>
         {{join_code}}
       </div>
       <a
@@ -474,6 +490,48 @@
     </form>
   </div>
 </div>
+<div
+  class="bg-black bg-opacity-50 w-full h-screen shadow-md rounded-md fixed top-0 left-0 z-50 lg:px-24 lg:py-24 transition-all"
+  id="joincode_popup"
+  onclick="joincodePopup()"
+>
+  <div
+    class="h-full w-full bg-white rounded-md flex flex-col"
+    onclick="event.stopPropagation()"
+  >
+    <div class="w-full flex justify-end p-4 cursor-pointer">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="2"
+        stroke="currentColor"
+        class="size-6"
+        onclick="joincodePopup()"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M6 18 18 6M6 6l12 12"
+        />
+      </svg>
+    </div>
+    <div
+      class="align-middle text-center text-8xl font-bold mx-auto my-auto flex flex-col gap-8"
+    >
+      <div class="text-5xl font-bold text-center">
+        Join your teacher's class by entering the pin!
+      </div>
+
+      <div class="bg-gray-200 rounded-lg p-4 mx-auto mb-48 lg:mb-36">
+        {{join_code}}
+      </div>
+      <div class="lg:hidden block text-lg font-normal text-gray-500">
+        Flip device to improve visibility for students!
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
   let tablePopup = false;
@@ -547,6 +605,16 @@
     } else {
       show.classList.remove("hidden");
       edit.classList.add("hidden");
+    }
+  }
+  function joincodePopup() {
+    popup = document.getElementById("joincode_popup");
+    if (popup.classList.contains("opacity-0")) {
+      popup.classList.add("opacity-100");
+      popup.classList.remove("opacity-0", "pointer-events-none");
+    } else {
+      popup.classList.add("opacity-0", "pointer-events-none");
+      popup.classList.remove("opacity-100");
     }
   }
 </script>
