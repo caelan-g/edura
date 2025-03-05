@@ -1,7 +1,7 @@
 {% extends "layouts/layout_user.html" %} {% block body %}
 <!---->
 {% if class_data %}
-<div class="flex flex-row justify-between">
+<div class="flex flex-col lg:flex-row justify-between">
   <div class="text-4xl font-bold">{{class_entity[1]}}</div>
   <div class="flex flex-row gap-2">
     <div class="flex flex-row gap-2">
@@ -50,7 +50,7 @@
     </div>
   </div>
 </div>
-<div class="flex flex-row gap-2 mt-4">
+<div class="flex flex-col lg:flex-row gap-8 lg:gap-2 mt-4">
   <div class="flex flex-col gap-2 grow">
     <div class="text-3xl font-bold">Graphs</div>
     <div class="text-md font-bold bg-white rounded-md p-4 shadow-md">
@@ -137,7 +137,7 @@
                   viewBox="0 0 24 24"
                   stroke-width="1.5"
                   stroke="currentColor"
-                  class="size-6"
+                  class="size-5 lg:size-6"
                 >
                   <path
                     stroke-linecap="round"
@@ -148,7 +148,7 @@
               </div>
               <div
                 id="student_id_{{row[0]}}"
-                class="flex flex-col absolute z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md shadow-md"
+                class="lg:right-auto flex flex-col absolute right-12 z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md shadow-md"
               >
                 <div>
                   <input type="hidden" name="delete" value="{{row[0]}}" />
@@ -167,7 +167,7 @@
                       viewBox="0 0 24 24"
                       stroke-width="2.5"
                       stroke="currentColor"
-                      class="size-6 lg:size-4 top-[.1rem] relative mr-1"
+                      class="size-5 lg:size-4 top-[.1rem] relative mr-1"
                     >
                       <path
                         stroke-linecap="round"
@@ -202,7 +202,7 @@
                       stroke-width="2.5"
                       stroke="currentColor"
                       fill="None"
-                      class="size-6 lg:size-4 top-[.1rem] relative mr-1"
+                      class="size-5 lg:size-4 top-[.1rem] relative mr-1"
                     >
                       <path
                         stroke-linecap="round"
@@ -230,7 +230,7 @@
                       stroke-width="2.5"
                       stroke="currentColor"
                       fill="none"
-                      class="size-6 lg:size-4 top-[.1rem] relative mr-1"
+                      class="size-5 lg:size-4 top-[.1rem] relative mr-1"
                     >
                       <path
                         stroke-linecap="round"
@@ -258,7 +258,7 @@
     </table>
   </div>
 
-  <div class="flex flex-col gap-2 w-[24rem]">
+  <div class="flex flex-col gap-2 w-full lg:w-[24rem]">
     <div class="text-3xl font-bold">Sessions</div>
     {% for session in session_data %}
     <div
@@ -325,7 +325,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="size-6"
+              class="size-5 lg:size-6"
             >
               <path
                 stroke-linecap="round"
@@ -336,7 +336,7 @@
           </div>
           <div
             id="session_id_{{session[0]}}"
-            class="flex flex-col absolute z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md shadow-md"
+            class="flex flex-col absolute lg:right-auto right-14 z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md shadow-md"
           >
             <form>
               <input type="hidden" name="session_id" value="{{session[0]}}" />
@@ -353,7 +353,7 @@
                   stroke-width="2.5"
                   stroke="currentColor"
                   fill="None"
-                  class="size-6 lg:size-4 top-[.1rem] relative mr-1"
+                  class="size-5 lg:size-4 top-[.1rem] relative mr-1"
                 >
                   <path
                     stroke-linecap="round"
@@ -378,7 +378,7 @@
                   viewBox="0 0 24 24"
                   stroke-width="2.5"
                   stroke="currentColor"
-                  class="size-6 lg:size-4 top-[.1rem] relative mr-1"
+                  class="size-5 lg:size-4 top-[.1rem] relative mr-1"
                 >
                   <path
                     stroke-linecap="round"
@@ -444,7 +444,7 @@
   onclick="invitePopup()"
 >
   <div
-    class="bg-white w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
+    class="bg-white w-[25rem] lg:w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
     onclick="event.stopPropagation()"
   >
     <form action="/invite_student" method="post">

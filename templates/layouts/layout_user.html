@@ -30,16 +30,19 @@
   </head>
   <body class="flex flex-col lg:flex-row lg:bg-gray-50">
     <nav
-      class="z-10 bg-gray-800 text-white font-bold p-2 px-4 lg:px-2 flex flex-row lg:flex-col align-middle lg:h-full fixed lg:w-48 lg:pt-24 lg:pb-20 lg:gap-10 w-full"
+      class="z-10 bg-gray-800 text-white font-bold p-2 px-4 lg:px-2 flex flex-row justify-between lg:justify-normal lg:flex-col align-middle lg:h-full fixed lg:w-48 lg:pt-24 lg:pb-20 lg:gap-10 w-full"
     >
-      <div class="text-3xl px-2 flex-row gap-1 hidden lg:flex">
+      <a
+        href="/dashboard"
+        class="text-3xl px-2 flex-row gap-1 {% if session['user_type'] == 'student' %} hidden {% else %} block {% endif %} lg:flex"
+      >
         <svg
           width="16"
           height="16"
           viewBox="0 0 32 32"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          class="size-8"
+          class="size-8 hidden lg:block"
         >
           <path
             d="M4.87404 21.5569C4.61994 21.9559 4.32955 22.4274 4.11175 22.7901C3.89396 23.1528 4.00284 23.6242 4.36584 23.8419L9.33893 26.8884C9.70193 27.106 10.1738 26.9972 10.3916 26.6345C10.5731 26.3081 10.8272 25.8729 11.1176 25.4014C13.0778 22.1735 15.0743 22.5362 18.6317 24.2408L23.5684 26.562C23.9677 26.7433 24.4033 26.562 24.5848 26.1993L26.9443 20.8678C27.1258 20.5051 26.9443 20.0336 26.5813 19.8523C25.5286 19.3808 23.4596 18.4016 21.6446 17.4948C14.8928 14.3032 9.23002 14.4845 4.87404 21.5569Z"
@@ -79,8 +82,10 @@
           </defs>
         </svg>
         <span class="logo"> Edura </span>
-      </div>
-      <div class="flex flex-row lg:flex-col gap-2 w-full justify-between">
+      </a>
+      <div
+        class="flex flex-row lg:flex-col gap-2 {% if session['user_type'] == 'student' %} justify-between w-full {% else %} ml-auto text-right {% endif %} lg:ml-0 lg:text-left"
+      >
         {% if session['user_type'] == 'student' %}
         <div class="transition-all lg:w-full lg:my-8">
           {% if not session['start_study_time'] %}
@@ -163,7 +168,7 @@
             <a
               href="{{ url_for('add_study', class_id=class[0]) }}"
               onclick="startTimer()"
-              class="p-2 font-bold text-xs rounded-md {{ class[2] | colourDictionary }} text-ellipsis text-ellipsis overflow-hidden text-nowrap"
+              class="p-2 font-bold text-xs rounded-md {{ class[2] | colourDictionary }} text-ellipsis overflow-hidden text-nowrap"
               >{{class[1]}}</a
             >
             {% endfor %}
@@ -296,7 +301,7 @@
     messages %}
     <div
       id="message"
-      class="translate-y-[-5rem] transition-all duration-300 mx-auto flex justify-center w-full font-bold text-gray-800 text-center fixed top-4 z-50 px-auto"
+      class="pointer-events-none translate-y-[-5rem] transition-all duration-300 mx-auto flex justify-center w-full font-bold text-gray-800 text-center fixed top-4 z-50 px-auto"
     >
       {% for category, message in messages %} {% if category == 'success' %}
       <div
@@ -319,7 +324,7 @@
       class="opacity-0 fixed transition-all fixed inset-0 bg-opacity-50 bg-black w-full h-full pointer-events-none flex justify-center scale-110"
     >
       <div
-        class="bg-white w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
+        class="bg-white w-[25rem] lg:w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
         onclick="event.stopPropagation()"
       >
         <form action="/add_study" method="post">
@@ -347,7 +352,7 @@
       class="top-0 left-0 flex flex-col w-full h-full z-50 bg-white opacity-0 pointer-events-none transition-all px-4 py-4 fixed"
     >
       <div class="flex flex-row w-full justify-between">
-        <div class="logo">Endura</div>
+        <a href="/dashboard" class="logo">Edura</a>
         <div id="close-button" onclick="navToggle()">
           <svg
             xmlns="http://www.w3.org/2000/svg"

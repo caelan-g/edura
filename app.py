@@ -22,11 +22,14 @@ import qrcode
 
 #TO DO LIST
 ### settings completion - password
+### DO I GO PURPLE OR YELLOW
 ### join code revamp - only on first page reload, clear on logout
 ### small ui changes (student has no classes, display join code enter only; display class name/colour in session; single digit code enter; )
 ### footer(s)
 ### internal documentation
 ### mock data
+### IMPORT BLEACH
+### editing of data - format for the user
 
 app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET_KEY")
@@ -146,7 +149,7 @@ def add_student(conn, cursor, student_id, class_id):
         conn.commit()
         conn.close()
         if session['user_type'] == 'teacher':
-            app.logger.info(f"Student:{student_id} added to class:{class_id}")
+            app.logger.info(f'Student:{student_id} added to class:{class_id}')
             flash('Student added successfully', 'success')
         else:
             flash('Class joined successfully', 'success')
@@ -239,7 +242,7 @@ def render_donut_graph(name_list, data, colour_data):
 def clear_mfa(id):
     conn = sqlite3.connect('study_app.db')
     cursor = conn.cursor()
-    cursor.execute("UPDATE students SET mfa_secret = ? WHERE student_id = ?", (None, id))
+    cursor.execute("UPDATE teachers SET mfa_secret = ? WHERE teacher_id = ?", (None, id))
     conn.commit()
     conn.close()  
 
@@ -291,10 +294,10 @@ def make_session_permanent():
 
 @app.template_filter('dateTimeFormat')
 def date_time_format_filter(date_time):
-    date = (date_time.split()[0]).split('-')
+    # Parse the datetime string into a datetime object
     date_obj = datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
     day_of_week = date_obj.strftime("%A")
-    day_month_year = f'{day_of_week}, {date[2] if date[2][0] != '0' else date[2][1]}-{date[2] if date[1][0] != '0' else date[1][1]}-{date[0]}'
+    day_month_year = f'{day_of_week}, {int(date_obj.day)}-{int(date_obj.month)}-{date_obj.year}'
     return day_month_year
 
 @app.template_filter('duration')
@@ -308,18 +311,18 @@ def duration_filter(start_time, end_time, type='readable'):
         return total_seconds
     elif type == 'readable':
         if hours > 1:
-            return f"{round(hours, 0)}h {str(minutes).replace(".0", "")}m"
+            return f'{round(hours, 0)}h {str(minutes).replace(".0", "")}m'
         else:
-            return f"{str(minutes).replace(".0", "")}m"
+            return f'{str(minutes).replace(".0", "")}m'
     
 @app.template_filter('timeFormat')
 def time_filter_filter(seconds):
     hours = int(seconds) / 3600
     minutes = math.floor((hours - math.floor(hours)) * 60)
     if hours >= 1:
-        return f"{math.floor(hours)}h {str(minutes).replace(".0", "")}m"
+        return f'{math.floor(hours)}h {str(minutes).replace(".0", "")}m'
     else:
-        return f"{str(minutes).replace(".0", "")}m"
+        return f'{str(minutes).replace(".0", "")}m'
     
 @app.template_filter('timeEditFormat')
 def time_edit_filter(time):
@@ -330,7 +333,7 @@ def time_edit_filter(time):
     minutes = str(math.floor(minutes)).replace(".0", "")
     seconds = str(seconds).replace(".0", "")
 
-    return f"{'0' + hours if len(hours) == 1 else hours}:{'0' + minutes if len(minutes) == 1 else minutes}:{'0' + seconds if len(seconds) == 1 else seconds}"
+    return f'{"0" + hours if len(hours) == 1 else hours}:{"0" + minutes if len(minutes) == 1 else minutes}:{"0" + seconds if len(seconds) == 1 else seconds}'
     
 @app.template_filter('getStudentName')
 def get_student_name(student_id):
@@ -461,7 +464,7 @@ def setup_mfa():
     
 
     # Generate QR Code
-    uri = totp.provisioning_uri(name=f"user{user_id}@studyapp.com", issuer_name="Study App Software")
+    uri = totp.provisioning_uri(name=f'user{user_id}@studyapp.com', issuer_name="Study App Software")
     qr = qrcode.make(uri)
     qr_path = "static/images/qrcode.png"
     qr.save(qr_path)
@@ -630,7 +633,7 @@ def create_class():
             cursor.execute("INSERT INTO classes (name, teacher_id, colour) VALUES (?, ?, ?)", (class_name, teacher_id, colour))
             conn.commit()
             conn.close()
-            app.logger.info(f"Class:{class_name} created by teacher:{teacher_id}")
+            app.logger.info(f'Class:{class_name} created by teacher:{teacher_id}')
             flash('Class created successfully', 'success')
             return redirect('/dashboard')
     else:
@@ -671,7 +674,7 @@ def add_study():
             conn.commit()
             conn.close()
             flash(f'Nice job studying for {study_time} seconds! Study time updated to {total_study_time} seconds', 'success')
-            app.logger.info(f"Student:{user_id} logged study time")
+            app.logger.info(f'Student:{user_id} logged study time')
             session['start_study_time'] = None
             return redirect('/dashboard')
         else:
@@ -804,7 +807,7 @@ def update_class():
                     cursor.execute("UPDATE classes SET name = ?, colour = ? WHERE class_id = ?", (new_class_name, new_colour, edit_class_id))
                     conn.commit()
                     conn.close()
-                    app.logger.info(f"Class:{edit_class_id} updated by teacher:{session['user_id']}")
+                    app.logger.info(f'Class:{edit_class_id} updated by teacher:{session["user_id"]}')
                     flash('Class updated successfully', 'success')
                 else:
                     flash('Please input a valid class name', 'error')
@@ -830,7 +833,7 @@ def delete_class(class_id):
                 cursor.execute("DELETE FROM classes_students WHERE class_id = ?", (class_id,))
                 conn.commit()
                 conn.close()
-                app.logger.info(f"Class:{class_id} deleted by teacher:{session['user_id']}")
+                app.logger.info(f'Class:{class_id} deleted by teacher:{session["user_id"]}')
                 flash('Class deleted', 'success')
                 return redirect('/dashboard') #bug here - doens't show on first reload due to js
             else:
@@ -916,7 +919,7 @@ def remove_student():
                 cursor.execute('DELETE FROM study_sessions WHERE student_id = ? AND class_id = ?', (student_id, class_id))
                 conn.commit()
                 conn.close()
-                app.logger.info(f"Student:{student_id} removed by teacher:{session['user_id']} from class:{class_id}")
+                app.logger.info(f'Student:{student_id} removed by teacher:{session["user_id"]} from class:{class_id}')
                 flash('Student removed', 'success')
                 return redirect(f'/view_class/{class_id}')
             else:
@@ -944,7 +947,7 @@ def edit_study_time():
                 #print(study_time_seconds)
                 conn.commit()
                 conn.close()
-                app.logger.info(f"Study time for student:{student_id} in class:{class_id} updated by teacher:{session['user_id']}")
+                app.logger.info(f'Study time for student:{student_id} in class:{class_id} updated by teacher:{session["user_id"]}')
                 flash(f'Study time successfully updated', 'success')
                 return redirect(f'/view_class/{class_id}')
             else:
@@ -979,8 +982,8 @@ def delete_session():
                 cursor.execute('DELETE FROM study_sessions WHERE session_id = ?', (session_id,))
                 conn.commit()
                 conn.close()
-                app.logger.info(f"Session:{session_id} deleted by teacher:{session['user_id']}")
-                flash(f'Session deleted', 'success')
+                app.logger.info(f'Session:{session_id} deleted by teacher:{session["user_id"]}')
+                flash(f'Session deleted successfully', 'success')
                 return redirect(f'/view_class/{class_id}')
             else:
                 flash('You are not the owner of this class', 'error')
@@ -1013,7 +1016,7 @@ def update_session():
                 updateTotalStudyTime(cursor, student_id, class_id, new_duration - duration)
                 conn.commit()
                 conn.close()
-                app.logger.info(f"Session:{session_id} updated by teacher:{session['user_id']}")
+                app.logger.info(f'Session:{session_id} updated by teacher:{session["user_id"]}')
                 flash(f'Session time successfully updated', 'success')
                 return redirect(f'/view_class/{class_id}')
             else:
@@ -1030,7 +1033,7 @@ def update_session():
 def update_username():
     if verify():
         username = request.form.get('username')
-        if is_valid(username):
+        if is_valid(username) and ' ' not in username:
             user_id = session['user_id']
             conn = sqlite3.connect('study_app.db')
             cursor = conn.cursor()
@@ -1078,10 +1081,17 @@ def cancel_mfa():
     if verify():
         conn = sqlite3.connect('study_app.db')
         cursor = conn.cursor()
-        cursor.execute("UPDATE students SET mfa_secret = ? WHERE student_id = ?", (None, session['user_id']))
+        if session['user_type'] == 'student':
+            cursor.execute("UPDATE students SET mfa_secret = ? WHERE student_id = ?", (None, session['user_id']))
+        else:
+            cursor.execute("UPDATE teachers SET mfa_secret = ? WHERE teacher_id = ?", (None, session['user_id']))
         conn.commit()
         conn.close()  
         return redirect('/dashboard')
     else:
         flash('Please login to continue', 'error')
         return redirect('/login')
+    
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html"), 404

@@ -53,7 +53,7 @@
           class="bg-gray-800 font-bold text-white mx-auto text-center py-2 px-4 rounded-md cursor-pointer flex flex-row gap-2"
           href="/sessions"
         >
-          View more
+          View all
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -203,7 +203,7 @@
     class="opacity-0 transition-all fixed inset-0 bg-opacity-50 bg-black w-full h-full pointer-events-none flex justify-center scale-110"
   >
     <div
-      class="bg-white w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
+      class="bg-white w-[25rem] lg:w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
       onclick="event.stopPropagation()"
     >
       <form action="/update_class" method="post" class="flex flex-col gap-2">
@@ -218,7 +218,7 @@
         <div class="flex flex-row gap-2 mb-4">
           {% for colour in colours %}
           <label
-            class="w-12 h-12 rounded-md cursor-pointer {{ colour | colourDictionary }}"
+            class="size-10 lg:size-12 rounded-md cursor-pointer {{ colour | colourDictionary }}"
           >
             {% if colour == class[4] %}
             <input
@@ -289,7 +289,7 @@
   onclick="popup('class_popup')"
 >
   <div
-    class="bg-white w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
+    class="bg-white w-[25rem] lg:w-[30rem] rounded-md p-12 mx-4 lg:mx-auto my-auto align-middle"
     onclick="event.stopPropagation()"
   >
     <form action="/create_class" method="post" class="flex flex-col gap-4">
@@ -305,7 +305,7 @@
       <div class="flex flex-row gap-2">
         {% for colour in colours %}
         <label
-          class="w-12 h-12 rounded-md cursor-pointer {{ colour | colourDictionary }}"
+          class="size-10 lg:size-12 rounded-md cursor-pointer {{ colour | colourDictionary }}"
         >
           <input
             type="radio"

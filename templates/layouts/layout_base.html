@@ -31,10 +31,6 @@
     <title>Edura</title>
   </head>
   <body class="z-50">
-    <img
-      src="{{ url_for('static', filename='images/mesh.png') }}"
-      class="absolute lg:-top-[22rem] left-0 -z-10 lg:block hidden"
-    />
     <div
       class="font-bold p-4 w-full flex flex-row justify-between gap-12 lg:px-48"
     >
@@ -78,7 +74,7 @@
     messages %}
     <div
       id="message"
-      class="translate-y-[-5rem] transition-all duration-300 mx-auto flex justify-center w-full font-bold text-gray-800 text-center fixed top-4 z-50 px-auto"
+      class="pointer-events-none translate-y-[-5rem] transition-all duration-300 mx-auto flex justify-center w-full font-bold text-gray-800 text-center fixed top-4 z-50 px-auto"
     >
       {% for category, message in messages %} {% if category == 'success' %}
       <div

@@ -1,0 +1,23 @@
+{% extends "layouts/layout_base.html" %} {% block body %}
+<div class="relative w-full h-screen flex items-center justify-center -top-24">
+  <!-- Background 404 -->
+  <div
+    class="absolute inset-0 flex items-center justify-center text-[32rem] font-extrabold opacity-10 z-0 pointer-events-none"
+  >
+    404
+  </div>
+
+  <!-- Foreground Content -->
+  <div class="text-center z-10">
+    <div class="text-5xl font-bold lg:text-4xl">
+      We couldn't find what you were looking for...
+    </div>
+    <a
+      href="/"
+      class="mt-6 text-xl p-2 text-white font-bold rounded-md bg-gray-800 inline-block hover:bg-gray-700 transition-all"
+    >
+      Return home
+    </a>
+  </div>
+</div>
+{% endblock %}
