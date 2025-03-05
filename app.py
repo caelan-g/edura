@@ -9,7 +9,7 @@ import math
 from bokeh.plotting import figure
 from bokeh.embed import components
 from bokeh.io import show
-from bokeh.models import AnnularWedge, ColumnDataSource, Legend, LegendItem, Plot, Range1d
+from bokeh.models import AnnularWedge, ColumnDataSource, Legend, LegendItem, Plot, Range1d, LabelSet
 from bokeh.resources import INLINE
 import logging
 import uuid
@@ -178,20 +178,32 @@ def get_class(class_id):
     conn.close()
     return class_entity
     
+
 def render_bar_graph(name_list, data, colour_data):
+    formatted_time = []
+    for i in data:
+        formatted_time.append(time_filter_filter(i))
+    source = ColumnDataSource(data=dict(x=name_list, y=data, formatted_time=formatted_time))  # Store data in ColumnDataSource
+
     plot = figure(x_range=name_list, toolbar_location=None, sizing_mode="stretch_both", tools="")
+
     if colour_data == 'monochrome':
-        plot.vbar(x=name_list, top=data, line_width=0, width=0.9, fill_color="rgb(59, 130, 246)", border_radius=6)
+        plot.vbar(x=name_list, top=data, line_width=0, width=0.9, fill_color="rgb(59, 130, 246)", border_radius=8)
     else:
-        plot.vbar(x=name_list, top=data, line_width=0, width=0.9, fill_color=colour_data, border_radius=6)#"rgb(59, 130, 246)")
+        plot.vbar(x=name_list, top=data, line_width=0, width=0.9, fill_color=colour_data, border_radius=8)
+
+    labels = LabelSet(x='x', y='y', text='formatted_time', level='glyph', x_offset=-10, y_offset=5, source=source, text_font_style="bold")
+    plot.add_layout(labels)
     plot.background_fill_color = None
     plot.border_fill_color = None
     plot.y_range.start = 0
+    plot.y_range.end = max(data) * 1.1
     plot.outline_line_color = None
     plot.yaxis.visible = False
     plot.xgrid.grid_line_color = None
     plot.ygrid.grid_line_alpha = 0.5
     plot.ygrid.grid_line_dash = [6, 4]
+
     return components(plot)
 
 def render_donut_graph(name_list, data, colour_data):
