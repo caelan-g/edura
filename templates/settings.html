@@ -110,9 +110,13 @@
           clip-rule="evenodd"
         />
       </svg>
-      <div class="text-ellipsis overflow-hidden text-nowrap">
-        Delete your account?
-      </div>
+      <form
+        action="/delete_account"
+        method="post"
+        class="text-ellipsis overflow-hidden text-nowrap"
+      >
+        <button>Delete your account?</button>
+      </form>
     </a>
   </div>
 </div>

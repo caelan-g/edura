@@ -21,7 +21,7 @@
       href="{{ url_for('static', filename='logo-blue.svg') }}"
     />
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>Study App</title>
+    <title>Edura</title>
     <!--<link
       rel="stylesheet"
       type="text/css"
@@ -94,32 +94,27 @@
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              fill="none"
+              fill="currentColor"
               viewBox="0 0 24 24"
-              stroke-width="2"
+              stroke-width="2.5"
               stroke="currentColor"
-              class="size-5 relative top-[0.1em]"
+              class="size-5 relative top-[0.15em] left-[0.2rem]"
             >
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z"
+                d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"
               />
             </svg>
 
-            Timer
+            Start
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              stroke-width="2"
+              stroke-width="2.5"
               stroke="currentColor"
-              class="size-5 relative left-[-0.1em] top-[0.1em]"
+              class="size-5 relative left-[-0.1em] top-[0.15em]"
             >
               <path
                 stroke-linecap="round"
@@ -135,23 +130,19 @@
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              fill="none"
+              fill="currentColor"
               viewBox="0 0 24 24"
-              stroke-width="2"
+              stroke-width="1.5"
               stroke="currentColor"
               class="size-5 relative top-[0.1em]"
             >
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M9 9.563C9 9.252 9.252 9 9.563 9h4.874c.311 0 .563.252.563.563v4.874c0 .311-.252.563-.563.563H9.564A.562.562 0 0 1 9 14.437V9.564Z"
+                d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z"
               />
             </svg>
+
             <div id="timer" class="flex flex-row">
               <div id="hour">{{session['timer_hr']}}</div>
               <div>:</div>
@@ -484,7 +475,6 @@
       .logo {
         font-family: "Merriweather Sans", sans-serif;
         letter-spacing: -1px;
-        font-size: 24px;
         padding-top: auto;
         padding-bottom: auto;
       }

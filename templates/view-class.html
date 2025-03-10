@@ -69,7 +69,7 @@
 <div class="flex flex-col lg:flex-row gap-8 lg:gap-2 mt-4">
   <div class="flex flex-col gap-2 grow">
     <div class="text-3xl font-bold">Graphs</div>
-    <div class="text-md font-bold bg-white rounded-md p-4 shadow-md">
+    <div class="text-md font-bold bg-white rounded-md p-4 lg:shadow-md border border-gray-100">
       <div class="bg-white w-full h-96">
         {% if bar_script %} {{ resources|safe }}
         <div class="w-full h-full">{{ bar_div|safe }}</div>
@@ -81,11 +81,21 @@
         </div>
         {% endif %}
       </div>
-      Average study time is {{average_study_time}} seconds
+      Average study time is {{average_study_time | timeFormat()}}
     </div>
-    <div class="text-3xl font-bold">Class</div>
+    <div class="flex flex-row justify-between">
+      <div class="text-3xl font-bold">Class</div>
+      <form method="get" action="{{ url_for('view_class', class_id=class_entity[0]) }}" class="flex flex-row">
+        <select name="sort_by" id="sort_by" class="bg-gray-100 border border-gray-200 p-1 rounded-md" onchange="this.form.submit()">
+          <option value="name" {% if request.args.get('sort_by') == 'name' %}selected{% endif %}>Name</option>
+          <option value="study_time" {% if request.args.get('sort_by') == 'study_time' %}selected{% endif %}>Total Study Time</option>
+      </select>
+      </form>
+    </div>
+    
+  
     <table
-      class="table-auto text-left text-lg lg:text-base shadow-md rounded-md border border-gray-100"
+      class="table-auto text-left text-lg lg:text-base lg:shadow-md rounded-md border border-gray-100"
     >
       <thead>
         <tr class="bg-gray-200">
@@ -110,7 +120,7 @@
               <input
                 type="text"
                 name="new_study_time"
-                class="bg-gray-100 rounded-md py-1 px-2"
+                class="bg-gray-100 border border-gray-200 rounded-md py-1 px-2 w-[5.3rem]"
                 value="{{row[2] | timeEditFormat()}}"
                 placeholder="00:00:00"
               />
@@ -122,7 +132,7 @@
               />
               <button
                 type="submit"
-                class="bg-gray-800 rounded-md p-1 text-white my-auto"
+                class="bg-gray-800 rounded-md p-1 text-white h-full inline relative top-[.3rem]"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -130,7 +140,7 @@
                   viewBox="0 0 24 24"
                   stroke-width="2.5"
                   stroke="currentColor"
-                  class="size-5"
+                  class="size-6"
                 >
                   <path
                     stroke-linecap="round"
@@ -164,7 +174,7 @@
               </div>
               <div
                 id="student_id_{{row[0]}}"
-                class="lg:right-auto flex flex-col absolute right-12 z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md shadow-md"
+                class="lg:right-auto flex flex-col absolute right-12 z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md lg:shadow-md"
               >
                 <div>
                   <input type="hidden" name="delete" value="{{row[0]}}" />
@@ -277,139 +287,150 @@
   <div class="flex flex-col gap-2 w-full lg:w-[24rem]">
     <div class="text-3xl font-bold">Sessions</div>
     {% for session in session_data %}
-    <div
-      class="bg-white border border-gray-100 rounded-md px-4 py-4 flex flex-col shadow-md"
-    >
-      <div class="flex flex-row justify-between items-end">
-        <div class="text-xl font-bold">{{session[2] | getStudentName}}</div>
-        <div
-          id="study_show_session_id_{{session[0]}}"
-          class="text-xl font-bold"
-        >
-          {{ session[3] | duration(session[4]) }}
-        </div>
-        <form
-          action="/update_session"
-          method="post"
-          id="study_edit_session_id_{{session[0]}}"
-          class="hidden flex flex-row"
-        >
-          <input
-            class="text-xl font-bold bg-gray-100 rounded-md px-2"
-            value="{{ (session[3] | duration(session[4], 'seconds')) | timeEditFormat }}"
-            name="new_session_duration"
-            placeholder="00:00:00"
-          />
-          <input
-            type="hidden"
-            name="duration"
-            value="{{ session[3] | duration(session[4], 'seconds') }}"
-          />
-          <input type="hidden" name="session_id" value="{{session[0]}}" />
-          <input type="hidden" name="class_id" value="{{session[1]}}" />
-          <input type="hidden" name="student_id" value="{{session[2]}}" />
-          <button class="bg-gray-800 rounded-md p-1 text-white my-auto">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="2.5"
-              stroke="currentColor"
-              class="size-5"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="m4.5 12.75 6 6 9-13.5"
-              />
-            </svg>
-          </button>
-        </form>
-      </div>
-      <div class="text-md text-gray-800 overflow-x-hidden text-ellipsis">
-        {{session[5]}}
-      </div>
-      <div class="flex flex-row justify-between">
-        <div class="text-sm text-gray-500">
-          {{session[3] | dateTimeFormat()}}
-        </div>
-        <div class="flex flex-row justify-between cursor-pointer">
-          <div onclick="actionPopup({{session[0]}}, 'session')">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="size-5 lg:size-6"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
-              />
-            </svg>
+    <form action="/update_session" method="post">
+      <input type="hidden" name="session_id" value="{{session[0]}}" />
+      <input type="hidden" name="class_id" value="{{session[1]}}" />
+      <input type="hidden" name="student_id" value="{{session[2]}}" />
+      <div
+        class="bg-white border border-gray-100 rounded-md px-4 py-4 flex flex-col lg:shadow-md"
+      >
+        <div class="flex flex-row justify-between justify-start">
+          <div class="text-xl font-bold">{{session[2] | getStudentName}}</div>
+          <div
+            id="study_show_session_id_{{session[0]}}"
+            class="text-xl font-bold"
+          >
+            {{ session[3] | duration(session[4]) }}
           </div>
           <div
-            id="session_id_{{session[0]}}"
-            class="flex flex-col absolute lg:right-auto right-14 z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md shadow-md"
+            id="study_edit_session_id_{{session[0]}}"
+            class="hidden flex flex-row"
           >
-            <form>
-              <input type="hidden" name="session_id" value="{{session[0]}}" />
-              <input type="hidden" name="class_id" value="{{session[1]}}" />
-              <input type="hidden" name="student_id" value="{{session[2]}}" />
-              <button
-                class="flex font-bold text-sm flex-row hover:bg-gray-100 transition-all w-full px-3 py-1"
-                type="button"
-                onclick="toggleStudyEdit({{session[0]}}, 'session')"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  stroke-width="2.5"
-                  stroke="currentColor"
-                  fill="None"
-                  class="size-5 lg:size-4 top-[.1rem] relative mr-1"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
-                  />
-                </svg>
+            <input
+              class="text-xl font-bold bg-gray-100 rounded-md p-1 w-[6.2rem] border border-gray-200"
+              value="{{ (session[3] | duration(session[4], 'seconds')) | timeEditFormat }}"
+              name="new_session_duration"
+              placeholder="00:00:00"
+            />
+            <input
+              type="hidden"
+              name="duration"
+              value="{{ session[3] | duration(session[4], 'seconds') }}"
+            />
+          </div>
+        </div>
+        <div
+          class="text-md text-gray-800 overflow-x-hidden text-ellipsis"
+          id="study_show_session_id_{{session[0]}}"
+        >
+          {{session[5]}}
+        </div>
+        <div id="study_edit_session_id_{{session[0]}}" class="flex-col hidden">
+          <input
+            class="bg-gray-100 rounded-md p-2 my-1 w-full border border-gray-200"
+            value="{{session[5]}}"
+            name="session_description"
+          />
+          <div class="flex flex-row gap-1">
+            <div
+              class="bg-gray-200 rounded-md p-2 font-bold grow cursor-pointer text-center"
+              onclick="toggleStudyEdit({{session[0]}}, 'session')"
+            >
+              Cancel
+            </div>
+            <button
+              class="bg-gray-800 rounded-md p-1 text-white font-bold grow"
+            >
+              Save
+            </button>
+          </div>
+        </div>
 
-                Edit
-              </button>
-            </form>
-            <form action="/delete_session" method="post">
-              <input type="hidden" name="session_id" value="{{session[0]}}" />
-              <input type="hidden" name="class_id" value="{{session[1]}}" />
-              <input type="hidden" name="student_id" value="{{session[2]}}" />
-              <button
-                class="flex font-bold flex-row hover:bg-gray-100 transition-all w-full text-sm px-3 py-1"
+        <div
+          class="flex flex-row justify-between"
+          id="study_show_session_id_{{session[0]}}"
+        >
+          <div class="text-sm text-gray-500">
+            {{session[3] | dateTimeFormat()}}
+          </div>
+          <div class="flex flex-row justify-between cursor-pointer">
+            <div onclick="actionPopup({{session[0]}}, 'session')">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="size-5 lg:size-6"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2.5"
-                  stroke="currentColor"
-                  class="size-5 lg:size-4 top-[.1rem] relative mr-1"
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
+                />
+              </svg>
+            </div>
+            <div
+              id="session_id_{{session[0]}}"
+              class="flex flex-col absolute lg:right-auto right-14 z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md lg:shadow-md"
+            >
+              <form>
+                <input type="hidden" name="session_id" value="{{session[0]}}" />
+                <input type="hidden" name="class_id" value="{{session[1]}}" />
+                <input type="hidden" name="student_id" value="{{session[2]}}" />
+                <button
+                  class="flex font-bold text-sm flex-row hover:bg-gray-100 transition-all w-full px-3 py-1"
+                  type="button"
+                  onclick="toggleStudyEdit({{session[0]}}, 'session')"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                  />
-                </svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    stroke-width="2.5"
+                    stroke="currentColor"
+                    fill="None"
+                    class="size-5 lg:size-4 top-[.1rem] relative mr-1"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
+                    />
+                  </svg>
 
-                Delete
-              </button>
-            </form>
+                  Edit
+                </button>
+              </form>
+              <form action="/delete_session" method="post">
+                <input type="hidden" name="session_id" value="{{session[0]}}" />
+                <input type="hidden" name="class_id" value="{{session[1]}}" />
+                <input type="hidden" name="student_id" value="{{session[2]}}" />
+                <button
+                  class="flex font-bold flex-row hover:bg-gray-100 transition-all w-full text-sm px-3 py-1"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2.5"
+                    stroke="currentColor"
+                    class="size-5 lg:size-4 top-[.1rem] relative mr-1"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                    />
+                  </svg>
+
+                  Delete
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </form>
     {% endfor %}
   </div>
 </div>
@@ -465,6 +486,7 @@
   >
     <form action="/invite_student" method="post">
       <div class="text-2xl font-bold">Invite a student</div>
+      <div class="">Add a student by username to your class</div>
       <input
         class="bg-gray-100 p-2 rounded-md w-full my-6"
         autocomplete="off"
@@ -491,7 +513,7 @@
   </div>
 </div>
 <div
-  class="bg-black bg-opacity-50 w-full h-screen shadow-md rounded-md fixed top-0 left-0 z-50 lg:px-24 lg:py-24 transition-all opacity-0 pointer-events-none"
+  class="bg-black bg-opacity-50 w-full h-screen lg:shadow-md rounded-md fixed top-0 left-0 z-50 lg:px-24 lg:py-24 transition-all opacity-0 pointer-events-none"
   id="joincode_popup"
   onclick="joincodePopup()"
 >
@@ -517,13 +539,13 @@
       </svg>
     </div>
     <div
-      class="align-middle text-center text-8xl font-bold mx-auto my-auto flex flex-col gap-8"
+      class="align-middle text-center font-bold mx-auto my-auto flex flex-col gap-8"
     >
       <div class="text-5xl font-bold text-center">
         Join your teacher's class by entering the pin!
       </div>
 
-      <div class="bg-gray-200 rounded-lg p-4 mx-auto mb-48 lg:mb-36">
+      <div class="bg-gray-200 rounded-lg p-4 text-8xl lg:text-[10rem] mx-auto mb-48 lg:mb-36">
         {{join_code}}
       </div>
       <div class="lg:hidden block text-lg font-normal text-gray-500">
@@ -591,22 +613,29 @@
     let show;
     let edit;
     if (type == "session") {
-      show = document.getElementById(`study_show_session_id_${id}`);
-      edit = document.getElementById(`study_edit_session_id_${id}`);
+      show = document.querySelectorAll(`#study_show_session_id_${id}`);
+      edit = document.querySelectorAll(`#study_edit_session_id_${id}`);
     } else {
-      show = document.getElementById(`study_show_student_id_${id}`);
-      edit = document.getElementById(`study_edit_student_id_${id}`);
+      show = document.querySelectorAll(`#study_show_student_id_${id}`);
+      edit = document.querySelectorAll(`#study_edit_student_id_${id}`);
     }
-    //console.log(show);
-    //console.log(edit);
-    if (edit.classList.contains("hidden")) {
-      show.classList.add("hidden");
-      edit.classList.remove("hidden");
-    } else {
-      show.classList.remove("hidden");
-      edit.classList.add("hidden");
-    }
+    edit.forEach((element) => {
+      if (element.classList.contains("hidden")) {
+        // Show the edit and hide the show elements
+        show.forEach((showElement) => {
+          showElement.classList.add("hidden");
+        });
+        element.classList.remove("hidden");
+      } else {
+        // Hide the edit and show the show elements
+        show.forEach((showElement) => {
+          showElement.classList.remove("hidden");
+        });
+        element.classList.add("hidden");
+      }
+    });
   }
+
   function joincodePopup() {
     popup = document.getElementById("joincode_popup");
     if (popup.classList.contains("opacity-0")) {

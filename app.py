@@ -18,24 +18,27 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from math import pi
 import pyotp
-import qrcode
+import qrcode   
+import bleach
 
 #TO DO LIST
-### settings completion - password
-### DO I GO PURPLE OR YELLOW
-### join code revamp - only on first page reload, clear on logout
-### small ui changes (student has no classes, display join code enter only; display class name/colour in session; single digit code enter; )
-### footer(s)
-### internal documentation
-### mock data
-### IMPORT BLEACH
-### editing of data - format for the user
+### 1 settings completion - password
+### 2 bleach
+###   input vald front-end
+###   
+### 3 toggle labels
+### 4 internal doc
+### 5 mock data
+### 6 join code revamp - only on first page reload, clear on logout
+### 7 small ui changes (student has no classes, display join code enter only; display class name/colour in session; single digit code enter; )
 
 app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET_KEY")
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=120)
 COLOURS = ['lightsteelblue', 'powderblue', 'lightblue', 'skyblue', 'lightskyblue', 'steelblue', 'cornflowerblue']
 TYPES = ['teacher', 'student']
+ALLOWED_TAGS = ['b', 'i', 'u', 'strong', 'em', 'a']
+ALLOWED_ATTRIBUTES = {'a': ['href', 'title']}
 
 app.config.update(
     SESSION_COOKIE_SECURE=True,  # Enforces HTTPS for session cookies
@@ -111,7 +114,7 @@ def is_valid(text):
     return isinstance(text, str) and 0 < len(text) <= 255 and re.match(r"^[a-zA-Z0-9\s.,'-]+$", text)
 
 def verify(auth='student'):
-    if 'user_id' in session:
+    if 'user_id' in session and 'csrf_token' in session:
         if auth == 'teacher':
             if session['user_type'] == 'teacher':
                 return True
@@ -275,10 +278,19 @@ def updateTotalStudyTime(cursor, student_id, class_id, time):
     cursor.execute('UPDATE classes_students SET total_study_time = ? WHERE student_id = ? AND class_id = ?', (new_total, student_id, class_id))
     
 def is_valid_time(time): # will need work
-    if time:
-        return True
-    else:
-        return False
+    print(time)
+    first_index = -1
+    for i in range(len(time)):
+        if time[i] == ':':
+            if first_index == -1:
+                first_index = i
+            elif i > first_index + 1:
+                for x in time.split(':'):
+                    if not x.isdigit() or len(x) > 2:
+                        return False  # Found the same character separated by other characters
+                return True
+    return False
+
     
 def colourDictionary():
     return {
@@ -297,7 +309,7 @@ def check_password(password):
 log = logging.getLogger("werkzeug")
 log.setLevel(logging.ERROR)
 logging.basicConfig(filename='record.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
-limiter = Limiter(get_remote_address, app=app, default_limits=["50 per minute"])
+limiter = Limiter(get_remote_address, app=app, default_limits=["30 per minute"])
 init_db()
 
 @app.before_request
@@ -323,7 +335,7 @@ def duration_filter(start_time, end_time, type='readable'):
         return total_seconds
     elif type == 'readable':
         if hours > 1:
-            return f'{round(hours, 0)}h {str(minutes).replace(".0", "")}m'
+            return f'{math.floor(hours)}h {str(minutes).replace(".0", "")}m'
         else:
             return f'{str(minutes).replace(".0", "")}m'
     
@@ -375,7 +387,7 @@ def register():
         hashed_password = generate_password_hash(password)
         conn = sqlite3.connect('study_app.db')
         cursor = conn.cursor()
-        if is_valid(username) and is_valid(password) and ' ' not in username and ' ' not in password:
+        if is_valid(username) and is_valid(password) and is_valid(name) and ' ' not in username and ' ' not in password:
             if type in TYPES:
                 if find_duplicate(cursor, username):
                     flash('Username already exists', 'error')
@@ -411,7 +423,7 @@ def register():
     return render_template('register.html', types=TYPES)
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("20 per minute")
+@limiter.limit("6 per minute")
 def login():
     if request.method == 'POST':
         username = request.form.get("username")
@@ -429,6 +441,7 @@ def login():
                 session['pending_user'] = student_record[0]
                 if not student_record[4]:
                     flash('Login successful', 'success')
+                    app.logger.info(f'Student:{student_record[0]} logged in')
                     return redirect('/skip_mfa')
                 else:
                     return redirect('/verify_mfa')
@@ -437,6 +450,7 @@ def login():
                 session['user_type'] = 'teacher'
                 if not teacher_record[4]:
                     flash('Login successful', 'success')
+                    app.logger.info(f'Teacher:{teacher_record[0]} logged in')
                     return redirect('/skip_mfa')
                 else:
                     return redirect('/verify_mfa')
@@ -460,7 +474,6 @@ def setup_mfa():
     if secret:
         secret = secret[0]  # Extract actual value
 
-    # Generate secret if not set
     if not secret:
         secret = pyotp.random_base32()
         if session['user_type'] == 'teacher':
@@ -471,12 +484,9 @@ def setup_mfa():
 
     conn.close()
 
-    # Test TOTP to ensure the secret is valid
     totp = pyotp.TOTP(secret)
     
-
-    # Generate QR Code
-    uri = totp.provisioning_uri(name=f'user{user_id}@studyapp.com', issuer_name="Study App Software")
+    uri = totp.provisioning_uri(name=f'user{user_id}@edura.com', issuer_name="Edura")
     qr = qrcode.make(uri)
     qr_path = "static/images/qrcode.png"
     qr.save(qr_path)
@@ -503,7 +513,6 @@ def skip_mfa():
             cursor.execute("SELECT * FROM teachers WHERE teacher_id = ?", (user_id,))
             teacher_record = cursor.fetchone()
             session['username'] = teacher_record[1]
-        
         session['csrf_token'] = str(uuid.uuid4())  # Add a CSRF token
         del session['pending_user']
         return redirect('/dashboard')
@@ -724,7 +733,7 @@ def join_code():
         return redirect('/login')
         
 @app.route('/view_class/<int:class_id>', methods=['GET', 'POST'])
-@limiter.limit("200 per minute")
+@limiter.limit("30 per minute")
 def view_class(class_id):
     if verify('teacher'):
         if is_valid(str(class_id)):
@@ -735,13 +744,21 @@ def view_class(class_id):
                 if auth_teacher(session['user_id'], class_id):
                     conn = sqlite3.connect('study_app.db')
                     cursor = conn.cursor()
+                    
+                    sort_by = request.args.get('sort_by', 'name')
+                    if sort_by == 'study_time':
+                        order_by = 'classes_students.total_study_time DESC'
+                    else:
+                        order_by = 'students.name ASC'
+                    
                     cursor.execute('''
                     SELECT students.student_id, students.name, classes_students.total_study_time
                         FROM students
                         JOIN classes_students ON students.student_id = classes_students.student_id
                         JOIN classes ON classes.class_id = classes_students.class_id
                         WHERE classes.class_id = ?
-                        ''', (class_id,))
+                        ORDER BY ?
+                        ''', (class_id, order_by))
                     class_data = cursor.fetchall()
                     cursor.execute("SELECT * FROM study_sessions WHERE class_id = ? ORDER BY start_time DESC", (class_id,))
                     session_data = cursor.fetchall()
@@ -783,6 +800,10 @@ def view_class(class_id):
     
 @app.route('/logout')
 def logout():
+    if session['user_type'] == 'teacher':
+        app.logger.info(f'Teacher:{session["user_id"]} logged out')
+    else:
+        app.logger.info(f'Student:{session["user_id"]} logged out')
     session.clear()
     flash('You have been logged out', 'success')
     return redirect('/login')
@@ -1017,20 +1038,24 @@ def update_session():
             if auth_teacher(session['user_id'], class_id):
                 duration = math.floor(float(request.form.get("duration")))
                 new_session_duration = request.form.get('new_session_duration')
-                new_duration = convertToSeconds(new_session_duration)
-                conn = sqlite3.connect('study_app.db')
-                cursor = conn.cursor()
-                cursor.execute('SELECT end_time FROM study_sessions WHERE session_id = ?', (session_id,))
-                cursor.execute('SELECT end_time FROM study_sessions WHERE session_id = ?', (session_id,))
-                end_time = datetime.strptime(cursor.fetchone()[0], "%Y-%m-%d %H:%M:%S.%f")
-                new_end_time = end_time + timedelta(seconds=(new_duration - duration))
-                cursor.execute('UPDATE study_sessions SET end_time = ? WHERE session_id = ?', (new_end_time, session_id))
-                updateTotalStudyTime(cursor, student_id, class_id, new_duration - duration)
-                conn.commit()
-                conn.close()
-                app.logger.info(f'Session:{session_id} updated by teacher:{session["user_id"]}')
-                flash(f'Session time successfully updated', 'success')
-                return redirect(f'/view_class/{class_id}')
+                description = request.form.get('session_description')
+                if is_valid_time(new_session_duration) and is_valid(description):
+                    new_duration = convertToSeconds(new_session_duration)
+                    conn = sqlite3.connect('study_app.db')
+                    cursor = conn.cursor()
+                    cursor.execute('SELECT end_time FROM study_sessions WHERE session_id = ?', (session_id,))
+                    end_time = datetime.strptime(cursor.fetchone()[0], "%Y-%m-%d %H:%M:%S.%f")
+                    new_end_time = end_time + timedelta(seconds=(new_duration - duration))
+                    cursor.execute('UPDATE study_sessions SET end_time = ?, description = ? WHERE session_id = ?', (new_end_time, description, session_id))
+                    updateTotalStudyTime(cursor, student_id, class_id, new_duration - duration)
+                    conn.commit()
+                    conn.close()
+                    app.logger.info(f'Session:{session_id} updated by teacher:{session["user_id"]}')
+                    flash(f'Session time successfully updated', 'success')
+                    return redirect(f'/view_class/{class_id}')
+                else:
+                    flash('Invalid time or description', 'error')
+                    return redirect(f'/view_class/{class_id}')
             else:
                 flash('You are not the owner of this class', 'error')
                 return redirect('/dashboard')
@@ -1051,8 +1076,10 @@ def update_username():
             cursor = conn.cursor()
             if session['user_type'] == 'teacher':
                 cursor.execute('UPDATE teachers SET username = ? WHERE teacher_id = ?', (username, user_id))
+                app.logger.info(f'Teacher:{user_id} updated their username')
             else:
                 cursor.execute('UPDATE students SET username = ? WHERE student_id = ?', (username, user_id))
+                app.logger.info(f'Student:{user_id} updated their username')
             conn.commit()
             conn.close()
             session['username'] = username
@@ -1075,8 +1102,10 @@ def update_display_name():
             cursor = conn.cursor()
             if session['user_type'] == 'teacher':
                 cursor.execute('UPDATE teachers SET name = ? WHERE teacher_id = ?', (display_name, user_id))
+                app.logger.info(f'Teacher:{user_id} updated their display name')
             else:
                 cursor.execute('UPDATE students SET name = ? WHERE student_id = ?', (display_name, user_id))
+                app.logger.info(f'Student:{user_id} updated their display name')
             conn.commit()
             conn.close()            
             flash('Display name successfully updated', 'success')
@@ -1107,3 +1136,37 @@ def cancel_mfa():
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    flash("An unexpected error occurred. Please try again later.", 'error')
+    if session.get('user_id'):
+        return redirect('/dashboard')
+    else:
+        return redirect('/')
+    
+@app.errorhandler(429)
+def rate_limit_exceeded(e):
+    flash("Too many attempts. Please try again later.", 'error')
+    return redirect('/')
+    
+
+@app.route('/delete_account', methods=['POST'])
+def delete_account():
+    if verify():
+        user_id = session['user_id']
+        conn = sqlite3.connect('study_app.db')
+        cursor = conn.cursor()
+        if session['user_type'] == 'teacher':
+            cursor.execute('DELETE FROM classes WHERE teacher_id = ?', (user_id,))
+            cursor.execute('DELETE FROM teachers WHERE teacher_id = ?', (user_id,))
+            app.logger.info(f'Teacher:{user_id} deleted their account')
+        else:
+            cursor.execute('DELETE FROM study_sessions WHERE student_id = ?', (user_id,))
+            cursor.execute('DELETE FROM classes_students WHERE student_id = ?', (user_id,))
+            cursor.execute('DELETE FROM students WHERE student_id = ?', (user_id,))
+            app.logger.info(f'Student:{user_id} deleted their account')
+    conn.commit()
+    conn.close()
+    flash('Account deleted', 'success')
+    return redirect("/logout")

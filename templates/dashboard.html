@@ -1,6 +1,6 @@
 {% extends "layouts/layout_user.html" %} {% block body %}
 <div
-  class="text-4xl lg:text-5xl font-bold mb-2 w-full text-ellipsis overflow-hidden"
+  class="text-4xl lg:text-5xl font-bold mb-4 w-full text-ellipsis overflow-hidden"
 >
   {{user_data[3]}}'s Dashboard
 </div>
@@ -10,7 +10,7 @@
 <div class="flex lg:flex-row flex-col gap-2">
   <div class="flex flex-col gap-2 grow">
     <div
-      class="lg:border bg-white border-gray-100 lg:lg:shadow-md p-4 w-full rounded-md h-96"
+      class="lg:border bg-white border-gray-100 lg:shadow-md p-4 w-full rounded-md h-96"
     >
       {% if bar_script %} {{ resources|safe }}
       <div class="w-full h-full">{{ bar_div|safe }}</div>
