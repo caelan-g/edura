@@ -1,22 +1,23 @@
-{% extends "layouts/layout_user.html" %} {% block body %}
+{% extends "layouts/layout_user.html" %} {% block body %} {% if classes %}
 <div
   class="text-4xl lg:text-5xl font-bold mb-4 w-full text-ellipsis overflow-hidden"
 >
   {{user_data[3]}}'s Dashboard
 </div>
+{% endif %}
 
 <!---->
-{% if session['user_type'] == 'student' %}
+{% if session['user_type'] == 'student' %} {% if classes %}
 <div class="flex lg:flex-row flex-col gap-2">
   <div class="flex flex-col gap-2 grow">
     <div
       class="lg:border bg-white border-gray-100 lg:shadow-md p-4 w-full rounded-md h-96"
     >
-      {% if bar_script %} {{ resources|safe }}
+      {% if sessions %} {{ resources|safe }}
       <div class="w-full h-full">{{ bar_div|safe }}</div>
       {{bar_script|safe}} {% else %}
-      <div class="mx-auto my-auto text-center align-middle font-bold text-2xl">
-        Join a class to view your data
+      <div class="w-full text-center align-middle my-12 font-bold text-xl">
+        Start studying to view your data
       </div>
       {% endif %}
     </div>
@@ -50,7 +51,7 @@
       {% endfor %}
       <div class="flex justify-between mt-4">
         <a
-          class="bg-gray-800 font-bold text-white mx-auto text-center py-2 px-4 rounded-md cursor-pointer flex flex-row gap-2"
+          class="bg-gray-800 font-bold text-white mx-auto text-center py-2 px-4 rounded-md cursor-pointer flex flex-row gap-2 hover:bg-gray-700 transition-all"
           href="/sessions"
         >
           View all
@@ -89,7 +90,7 @@
           />
           <button
             type="submit"
-            class="bg-gray-800 py-2 px-4 font-bold text-lg text-white rounded-md"
+            class="bg-gray-800 py-2 px-4 font-bold text-lg text-white rounded-md hover:bg-gray-700 transition-all"
           >
             Join
           </button>
@@ -120,17 +121,40 @@
       class="rounded-md bg-white lg:border border-gray-100 lg:shadow-md px-4 py-4 w-full h-[32rem]"
     >
       <div class="text-2xl font-bold">Studying Distribution</div>
-      {% if donut_script %} {{ resources|safe }}
+      {% if donut_div %} {{ resources|safe }}
       <div class="w-full h-full relative top-[-1rem]">{{ donut_div|safe }}</div>
       {{donut_script|safe}} {% else %}
-      <div class="align-middle text-md">Join a class to view data</div>
+      <div class="">Log a study session to view your data</div>
       {% endif %}
     </div>
   </div>
 </div>
-
-<!---->
 {% else %}
+<div class="w-full flex flex-col text-center gap-2">
+  <div class="text-3xl font-bold mt-24">
+    Enter your teacher's class code to join a class
+  </div>
+  <form action="/join_code" method="post">
+    <div
+      class="flex flex-row gap-2 text-3xl border-gray-100 border p-2 rounded-md bg-white mx-auto w-[26rem] justify-between transition-all hover:shadow-[0_0_20px_1px_rgba(59,130,246,.3)]"
+    >
+      <input
+        class="font-bold focus:outline-0 px-2 w-72"
+        autocomplete="off"
+        name="join_code"
+        placeholder="Join Code"
+        type="text"
+      />
+      <button
+        type="submit"
+        class="bg-gray-800 py-2 px-4 font-bold text-white rounded-md hover:bg-gray-700 transition-all"
+      >
+        Join
+      </button>
+    </div>
+  </form>
+</div>
+{% endif %} {% else %}
 <div
   class="text-3xl font-bold flex flex-row w-full align-middle justify-between my-2"
 >

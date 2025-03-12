@@ -22,15 +22,9 @@ import qrcode
 import bleach
 
 #TO DO LIST
-### 1 settings completion - password
-### 2 bleach
-###   input vald front-end
-###   
-### 3 toggle labels
+### bleach
 ### 4 internal doc
 ### 5 mock data
-### 6 join code revamp - only on first page reload, clear on logout
-### 7 small ui changes (student has no classes, display join code enter only; display class name/colour in session; single digit code enter; )
 
 app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET_KEY")
@@ -101,7 +95,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-def find_duplicate(cursor, username): #do i need this function?? - could it be used to find duplicate class codes or something?
+def find_duplicate(cursor, username): 
     cursor.execute("SELECT COUNT(*) FROM students WHERE username = ?", (username,))
     student_count = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM teachers WHERE username = ?", (username,))
@@ -112,6 +106,9 @@ def find_duplicate(cursor, username): #do i need this function?? - could it be u
 def is_valid(text):
     text = str(text)
     return isinstance(text, str) and 0 < len(text) <= 255 and re.match(r"^[a-zA-Z0-9\s.,'-]+$", text)
+
+def san_input(user_input):
+    return bleach.clean(user_input, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, strip=True)
 
 def verify(auth='student'):
     if 'user_id' in session and 'csrf_token' in session:
@@ -157,7 +154,6 @@ def add_student(conn, cursor, student_id, class_id):
         else:
             flash('Class joined successfully', 'success')
         return redirect('/dashboard')
-
 
 def auth_teacher(teacher_id, class_id):
     if get_class(class_id):
@@ -304,7 +300,7 @@ def colourDictionary():
     }
     
 def check_password(password):
-    return bool(re.search(r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)', password))
+    return bool(re.search(r'(?=.*[A-Z])(?=.*[a-z])(?=.*\d)', password) and len(password) >= 8)
     
 log = logging.getLogger("werkzeug")
 log.setLevel(logging.ERROR)
@@ -338,6 +334,25 @@ def duration_filter(start_time, end_time, type='readable'):
             return f'{math.floor(hours)}h {str(minutes).replace(".0", "")}m'
         else:
             return f'{str(minutes).replace(".0", "")}m'
+    
+@app.template_filter('sessionStats')
+def session_stats(session_data, student_id, stat):
+    if session_data:
+        total = 0
+        for session in session_data:
+            if session[2] == student_id:
+                total = total + 1
+        if stat == 'total':
+            return total
+        elif stat == 'average':
+            total_time = 0
+            for session in session_data:
+                if session[2] == student_id:
+                    total_time = total_time + int(duration_filter(session[3], session[4], 'seconds'))
+            if session == 0: 
+                return time_filter_filter(total_time/total)
+    return 0
+    
     
 @app.template_filter('timeFormat')
 def time_filter_filter(seconds):
@@ -423,7 +438,7 @@ def register():
     return render_template('register.html', types=TYPES)
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("6 per minute")
+@limiter.limit("10 per minute")
 def login():
     if request.method == 'POST':
         username = request.form.get("username")
@@ -747,43 +762,52 @@ def view_class(class_id):
                     
                     sort_by = request.args.get('sort_by', 'name')
                     if sort_by == 'study_time':
-                        order_by = 'classes_students.total_study_time DESC'
+                        cursor.execute('''
+                        SELECT students.student_id, students.name, classes_students.total_study_time
+                            FROM students
+                            JOIN classes_students ON students.student_id = classes_students.student_id
+                            JOIN classes ON classes.class_id = classes_students.class_id
+                            WHERE classes.class_id = ?
+                            ORDER BY classes_students.total_study_time DESC
+                            ''', (class_id,))
                     else:
-                        order_by = 'students.name ASC'
+                        cursor.execute('''
+                        SELECT students.student_id, students.name, classes_students.total_study_time
+                            FROM students
+                            JOIN classes_students ON students.student_id = classes_students.student_id
+                            JOIN classes ON classes.class_id = classes_students.class_id
+                            WHERE classes.class_id = ?
+                            ORDER BY students.name ASC
+                            ''', (class_id,))
                     
-                    cursor.execute('''
-                    SELECT students.student_id, students.name, classes_students.total_study_time
-                        FROM students
-                        JOIN classes_students ON students.student_id = classes_students.student_id
-                        JOIN classes ON classes.class_id = classes_students.class_id
-                        WHERE classes.class_id = ?
-                        ORDER BY ?
-                        ''', (class_id, order_by))
                     class_data = cursor.fetchall()
                     cursor.execute("SELECT * FROM study_sessions WHERE class_id = ? ORDER BY start_time DESC", (class_id,))
                     session_data = cursor.fetchall()
                     conn.close()
                     
-                    total = 0
-                    sum = 0
-                    for row in class_data:
-                        total += int(row[2])
-                        sum += 1
-                    if total > 0:
-                        average_study_time = round(total/sum, 1)
-                    else:
-                        average_study_time = 0
-                        
-                    names = []
-                    study_time = []  
-                    for i in class_data:
-                        names.append(i[1])
-                        study_time.append(i[2])
-                        
-                    resources = INLINE.render()
-                        
-                    bar_script, bar_div = render_bar_graph(names, study_time, 'monochrome')
+                    if class_data:
                     
+                        total = 0
+                        sum = 0
+                        for row in class_data:
+                            total += int(row[2])
+                            sum += 1
+                        if total > 0:
+                            average_study_time = round(total/sum, 1)
+                        else:
+                            average_study_time = 0
+                            
+                        names = []
+                        study_time = []  
+                        for i in class_data:
+                            names.append(i[1])
+                            study_time.append(i[2])
+                            
+                        bar_script, bar_div = render_bar_graph(names, study_time, 'monochrome')
+                    else:
+                        bar_script, bar_div = None, None
+                        average_study_time = 0
+                    resources = INLINE.render()
                     return render_template('view-class.html', resources=resources, bar_script=bar_script, bar_div=bar_div, class_data=class_data, class_entity=class_entity, average_study_time=average_study_time, join_code=join_code, session_data=session_data)
                 else:
                     flash('You are not the owner of this class', 'error')
@@ -860,6 +884,8 @@ def delete_class(class_id):
     if verify('teacher'):
         if is_valid(class_id):
             if auth_teacher(session['user_id'], class_id):
+                
+                
                 conn = sqlite3.connect('study_app.db')
                 cursor = conn.cursor()
                 cursor.execute("DELETE FROM classes WHERE class_id = ?", (class_id,))
@@ -1074,17 +1100,21 @@ def update_username():
             user_id = session['user_id']
             conn = sqlite3.connect('study_app.db')
             cursor = conn.cursor()
-            if session['user_type'] == 'teacher':
-                cursor.execute('UPDATE teachers SET username = ? WHERE teacher_id = ?', (username, user_id))
-                app.logger.info(f'Teacher:{user_id} updated their username')
+            if not find_duplicate(cursor, username):
+                if session['user_type'] == 'teacher':
+                    cursor.execute('UPDATE teachers SET username = ? WHERE teacher_id = ?', (username, user_id))
+                    app.logger.info(f'Teacher:{user_id} updated their username')
+                else:
+                    cursor.execute('UPDATE students SET username = ? WHERE student_id = ?', (username, user_id))
+                    app.logger.info(f'Student:{user_id} updated their username')
+                conn.commit()
+                conn.close()
+                session['username'] = username
+                flash('Username successfully updated', 'success')
+                return redirect('/settings')
             else:
-                cursor.execute('UPDATE students SET username = ? WHERE student_id = ?', (username, user_id))
-                app.logger.info(f'Student:{user_id} updated their username')
-            conn.commit()
-            conn.close()
-            session['username'] = username
-            flash('Username successfully updated', 'success')
-            return redirect('/settings')
+                flash('Username is taken', 'error')
+                return redirect('/settings')
         else:
             flash('Invalid username', 'error')
             return redirect('/settings')
@@ -1137,7 +1167,7 @@ def cancel_mfa():
 def page_not_found(e):
     return render_template("404.html"), 404
 
-@app.errorhandler(Exception)
+#@app.errorhandler(Exception)
 def handle_exception(e):
     flash("An unexpected error occurred. Please try again later.", 'error')
     if session.get('user_id'):

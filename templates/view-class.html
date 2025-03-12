@@ -174,7 +174,7 @@
               </div>
               <div
                 id="student_id_{{row[0]}}"
-                class="lg:right-auto flex flex-col absolute right-12 z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md lg:shadow-md"
+                class="lg:right-auto flex flex-col absolute right-12 z-50 ml-[1.5rem] opacity-0 transition-all border border-gray-100 duration-150 pointer-events-none bg-white p-1 rounded-md lg:shadow-md"
               >
                 <div>
                   <input type="hidden" name="delete" value="{{row[0]}}" />
@@ -273,9 +273,8 @@
         </tr>
         <tr id="student_id_more_{{row[0]}}" class="hidden">
           <td colspan="4" class="p-2">
-            <div class="">Total Sessions:</div>
-            <div class="">Average Session Duration:</div>
-            <div class="">Other stat:</div>
+            <div class="">Total Sessions: {{session_data | sessionStats(session['user_id'], 'total')}}</div>
+            <div class="">Average Session Duration: {{session_data | sessionStats(session['user_id'], 'average')}}</div>
           </td>
         </tr>
 
@@ -372,7 +371,7 @@
             </div>
             <div
               id="session_id_{{session[0]}}"
-              class="flex flex-col absolute lg:right-auto right-14 z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md lg:shadow-md"
+              class="flex flex-col absolute border border-gray-100 lg:right-auto right-14 z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md lg:shadow-md"
             >
               <form>
                 <input type="hidden" name="session_id" value="{{session[0]}}" />
