@@ -17,7 +17,7 @@
 />
 <div class="flex flex-row mt-12 lg:mt-20 mb-4">
   <div class="w-full lg:w-[40rem]">
-    <div class="text-6xl lg:text-8xl tracking-tighter font-bold">
+    <div class="text-6xl lg:text-8xl tracking-tighter font-semibold">
       Education infrastructure <br />
       to
       <span id="typing-text" class=""></span>
@@ -25,7 +25,7 @@
       <br />
       your class
     </div>
-    <div class="text-lg text-gray-700 mt-8 mb-6">
+    <div class="text-md text-gray-700 mt-8 mb-6">
       Monitor study sessions and progress, allowing students to view their study
       habits and performance data. Boost learning, track improvement, and
       optimise for academic success.
@@ -33,15 +33,15 @@
     <div class="flex flex-row gap-2">
       <a
         href="/register"
-        class="bg-gray-800 rounded-md p-2 px-3 font-bold text-white flex flex-row hover:bg-gray-700 transition-all group"
-        >Get Started
+        class="bg-gray-800 rounded-md py-2 px-4 font-semibold text-white flex flex-row hover:bg-gray-700 transition-all group"
+        >Start Tracking
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
           stroke-width="3"
           stroke="currentColor"
-          class="size-4 relative top-[.28rem] left-[.1rem] group-hover:translate-x-1 transition-all ease-in-out"
+          class="w-3.5 h-3.5 my-auto ml-1 group-hover:translate-x-1 transition-all ease-in-out"
         >
           <path
             stroke-linecap="round"
@@ -49,31 +49,21 @@
             d="m8.25 4.5 7.5 7.5-7.5 7.5"
           /></svg
       ></a>
-      <a href="/login" class="font-bold p-2 flex flex-row transition-all group"
+      <a
+        href="/login"
+        class="font-semibold py-2 px-4 flex flex-row transition-all group"
         >Sign In
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="3"
-          stroke="currentColor"
-          class="size-4 relative top-[.28rem] left-[.1rem] group-hover:translate-x-1 transition-all ease-in-out"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="m8.25 4.5 7.5 7.5-7.5 7.5"
-          /></svg
-      ></a>
+      </a>
     </div>
   </div>
-  <div class="z-50 mx-auto text-center">
+  <div class="z-50 mx-auto text-center hidden lg:block">
+    <!--yes i know it looks rough-->
     <div
       class="border-8 border-gray-50 bg-white shadow-xl h-[35rem] w-[18rem] text-center rounded-[2rem]"
     >
       <img
         src="{{ url_for('static', filename='images/image.png') }}"
-        class="h-full rounded-[1.5rem]"
+        class="h-full rounded-[1.5rem] hidden"
       />
     </div>
   </div>
@@ -81,7 +71,7 @@
 
 <a
   href="/register"
-  class="bg-yellow-800 rounded-md p-3 font-bold text-white hidden"
+  class="bg-yellow-800 rounded-md p-3 font-semibold text-white hidden"
   >Register Teacher</a
 >
 

@@ -20,327 +20,340 @@
       type="image/svg+xml"
       href="{{ url_for('static', filename='logo-blue.svg') }}"
     />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <title>Edura</title>
-    <!--<link
+    <link
       rel="stylesheet"
       type="text/css"
-      href="{{ url_for('static', filename='tailwind.min.css')}}"
-    />-->
+      href="{{ url_for('static', filename='css/tailwind.css')}}"
+    />
+    <title>Edura</title>
   </head>
-  <body class="flex flex-col lg:flex-row lg:bg-gray-50">
-    <nav
-      class="z-10 bg-gray-800 text-white font-bold p-2 px-4 lg:px-2 flex flex-row justify-between lg:justify-normal lg:flex-col align-middle lg:h-full fixed lg:w-48 lg:pt-24 lg:pb-20 lg:gap-10 w-full"
-    >
-      <a
-        href="/dashboard"
-        class="text-3xl px-2 flex-row gap-1 {% if session['user_type'] == 'student' %} hidden {% else %} block {% endif %} lg:flex"
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 32 32"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          class="size-8 hidden lg:block"
-        >
-          <path
-            d="M4.87404 21.5569C4.61994 21.9559 4.32955 22.4274 4.11175 22.7901C3.89396 23.1528 4.00284 23.6242 4.36584 23.8419L9.33893 26.8884C9.70193 27.106 10.1738 26.9972 10.3916 26.6345C10.5731 26.3081 10.8272 25.8729 11.1176 25.4014C13.0778 22.1735 15.0743 22.5362 18.6317 24.2408L23.5684 26.562C23.9677 26.7433 24.4033 26.562 24.5848 26.1993L26.9443 20.8678C27.1258 20.5051 26.9443 20.0336 26.5813 19.8523C25.5286 19.3808 23.4596 18.4016 21.6446 17.4948C14.8928 14.3032 9.23002 14.4845 4.87404 21.5569Z"
-            fill="url(#paint0_linear)"
-          />
-          <path
-            d="M27.1259 9.44315C27.38 9.04419 27.6704 8.5727 27.8882 8.21001C28.106 7.84732 27.9971 7.37583 27.6341 7.15822L22.661 4.11165C22.298 3.89404 21.8261 4.00285 21.6083 4.36553C21.4268 4.69195 21.1727 5.12718 20.8823 5.59867C18.9221 8.82658 16.9256 8.46389 13.3683 6.75926L8.43149 4.43807C8.03219 4.25673 7.59657 4.43807 7.41507 4.80076L5.05558 10.1322C4.87408 10.4949 5.05558 10.9664 5.41858 11.1478C6.47127 11.6193 8.54036 12.5985 10.3554 13.5052C17.1071 16.6969 22.7699 16.4793 27.1259 9.44315Z"
-            fill="url(#paint1_linear)"
-          />
-          <defs>
-            <linearGradient
-              id="paint0_linear"
-              x1="26.8048"
-              y1="28.4768"
-              x2="11.7952"
-              y2="19.8445"
-              gradientUnits="userSpaceOnUse"
-            >
-              <stop stop-color="white" stop-opacity="0.4" />
-              <stop offset="1" stop-color="white" />
-            </linearGradient>
-            <linearGradient
-              id="paint1_linear"
-              x1="5.19119"
-              y1="2.51384"
-              x2="20.2007"
-              y2="11.1462"
-              gradientUnits="userSpaceOnUse"
-            >
-              <stop
-                offset="0.000329443"
-                stop-color="white"
-                stop-opacity="0.5"
-              />
-              <stop offset="1" stop-color="white" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <span class="logo"> Edura </span>
-      </a>
+  <body class="flex flex-col lg:flex-row lg:bg-neutral-0">
+    <nav class="py-2 lg:h-full w-full lg:w-auto fixed z-10 bg-white">
       <div
-        class="flex flex-row lg:flex-col gap-2 {% if session['user_type'] == 'student' %} justify-between w-full {% else %} ml-auto text-right {% endif %} lg:ml-0 lg:text-left"
+        class="z-10 lg:ml-2 px-4 lg:px-2 flex flex-row justify-between lg:justify-normal lg:flex-col align-middle lg:grow lg:w-48 lg:pt-6 lg:gap-10 w-full top-0 lg:h-full lg:rounded-md lg:shadow-md border-gray-200 border-b lg:border"
       >
-        {% if session['user_type'] == 'student' %}
-        <div class="transition-all lg:w-full lg:my-8">
-          {% if not session['start_study_time'] %}
-          <div
-            class="peer font-bold rounded-full bg-blue-500 px-2 py-2 lg:py-1 flex justify-between w-28 cursor-pointer"
-          >
-            <svg
+        <a
+          href="/dashboard"
+          class="px-1 flex-row gap-1 {% if session['user_type'] == 'student' %} hidden {% else %} block {% endif %} lg:flex"
+        >
+          <div class="logo tracking-tighter text-xl lg:ml-4 mt-1">Edura</div>
+        </a>
+        <div
+          class="grow flex flex-row lg:flex-col gap-2 text-sm {% if session['user_type'] == 'student' %} w-full {% else %} ml-auto text-right {% endif %} lg:ml-0 lg:text-left"
+        >
+          {% if session['user_type'] == 'student' %}
+          <div class="transition-all lg:w-full lg:my-2">
+            {% if not session['start_study_time'] %}
+            <div
+              class="font-semibold rounded-full bg-blue-500 text-white px-2 py-2 lg:py-1 flex justify-left gap-2 w-24 cursor-pointer"
+              onclick="nav_popup('start_popup')"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="white"
+                viewBox="0 0 24 24"
+                stroke-width="2.5"
+                stroke="white"
+                class="w-4 h-4 relative top-[0.15em] left-[0.2rem]"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"
+                />
+              </svg>
+
+              Start
+            </div>
+            {% else %}
+            <a
+              onclick="stopTimer(), nav_popup('session_popup')"
+              class="font-semibold rounded-full bg-red-500 text-white px-2 py-1 flex w-28 cursor-pointer relative"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="size-5 relative"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z"
+                />
+              </svg>
+
+              <div id="timer" class="flex flex-row mx-auto">
+                <div id="hour">{{session['timer_hr']}}</div>
+                <div>:</div>
+                <div id="minute">{{session['timer_min']}}</div>
+                <div>:</div>
+                <div id="second">{{session['timer_sec']}}</div>
+              </div>
+            </a>
+            {% endif %}
+          </div>
+          {% endif %}
+          <a
+            href="/dashboard"
+            class="hidden lg:flex gap-2 {% if session['page'] == 'dashboard' %} bg-gray-100 font-semibold {% endif %} hover:bg-gray-100 transition-all px-2 py-2 rounded-md"
+            ><svg
               xmlns="http://www.w3.org/2000/svg"
-              fill="currentColor"
+              fill="none"
               viewBox="0 0 24 24"
-              stroke-width="2.5"
+              stroke-width="2"
               stroke="currentColor"
-              class="size-5 relative top-[0.15em] left-[0.2rem]"
+              class="w-4 h-4 relative top-[0.1em]"
             >
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"
+                d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25"
+              />
+            </svg>
+            <div class="hidden lg:block">Dashboard</div></a
+          >
+
+          <a
+            href="/tasks"
+            class="hidden lg:flex gap-2 {% if session['page'] == 'tasks' %} bg-gray-100 font-semibold {% endif %} hover:bg-gray-100 transition-all px-2 py-2 rounded-md"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-4 h-4 relative top-[0.1em]"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z"
               />
             </svg>
 
-            Start
+            <div class="hidden lg:block">Tasks</div></a
+          >
+          {% if session['user_type'] == 'student' %}
+          <a
+            href="/sessions"
+            class="hidden lg:flex gap-2 {% if session['page'] == 'sessions' %} bg-gray-100 font-semibold {% endif %} hover:bg-gray-100 transition-all px-2 py-2 rounded-md"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-4 h-4 relative top-[0.1em]"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"
+              />
+            </svg>
+            <div class="hidden lg:block">Sessions</div></a
+          >
+          {% endif %}
+          <a
+            href="/settings"
+            class="hidden lg:flex gap-2 {% if session['page'] == 'settings' %} bg-gray-100 font-semibold {% endif %} hover:bg-gray-100 transition-all px-2 py-2 rounded-md"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-4 h-4 relative top-[0.1em]"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+              />
+            </svg>
+            <div class="hidden lg:block">Settings</div></a
+          >
+
+          <a
+            onclick="navToggle()"
+            class="flex ml-auto lg:hidden gap-2 px-2 py-2 transition-all ease-in-out rounded-md"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              stroke-width="2.5"
+              stroke-width="2"
               stroke="currentColor"
-              class="size-5 relative left-[-0.1em] top-[0.15em]"
+              class="size-6 relative top-[0.1em]"
             >
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
               />
             </svg>
-          </div>
-          {% else %}
-          <a
-            onclick="stopTimer(), nav_popup('session_popup')"
-            class="font-bold rounded-full bg-red-500 px-2 py-1 flex justify-between w-28 cursor-pointer relative"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="size-5 relative top-[0.1em]"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z"
-              />
-            </svg>
-
-            <div id="timer" class="flex flex-row">
-              <div id="hour">{{session['timer_hr']}}</div>
-              <div>:</div>
-              <div id="minute">{{session['timer_min']}}</div>
-              <div>:</div>
-              <div id="second">{{session['timer_sec']}}</div>
-            </div>
           </a>
-          {% endif %}
-          <div
-            class="w-full z-50 opacity-0 pointer-events-none peer-hover:opacity-100 hover:pointer-events-auto hover:opacity-100 peer-hover:pointer-events-auto flex flex-col gap-2 transition-all border rounded-md p-2 bg-white absolute"
-          >
-            {% for class in classes %}
-            <a
-              href="{{ url_for('add_study', class_id=class[0]) }}"
-              onclick="startTimer()"
-              class="p-2 font-bold text-xs rounded-md {{ class[2] | colourDictionary }} text-ellipsis overflow-hidden text-nowrap"
-              >{{class[1]}}</a
-            >
-            {% endfor %}
-          </div>
         </div>
-        {% endif %}
-        <a
-          href="/dashboard"
-          class="hidden lg:flex gap-2 {% if session['page'] == 'dashboard' %} bg-gray-700 {% endif %} hover:bg-gray-700 transition-all px-2 py-2 rounded-md"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="size-5 relative top-[0.1em]"
+        <div>
+          <a class="gap-2 opacity-50 px-2 py-2 hidden lg:flex"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-4 h-4 my-auto"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+              />
+            </svg>
+            {{session['username']}}</a
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25"
-            />
-          </svg>
-          <div class="hidden lg:block">Dashboard</div></a
-        >
-        {% if session['user_type'] == 'student' %}
-        <a
-          href="/sessions"
-          class="hidden lg:flex gap-2 {% if session['page'] == 'sessions' %} bg-gray-700 {% endif %} hover:bg-gray-700 transition-all px-2 py-2 rounded-md"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="size-5 relative top-[0.1em]"
+          <a
+            href="/logout"
+            class="hidden lg:flex gap-2 px-2 py-2 mb-2 hover:bg-gray-100 transition-all rounded-md"
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-4 h-4 relative top-[0.1em]"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15"
+              />
+            </svg>
+            <div class="hidden lg:block text-sm">Log out</div></a
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"
-            />
-          </svg>
-          <div class="hidden lg:block">Sessions</div></a
-        >
-        {% endif %}
-        <a
-          href="/settings"
-          class="hidden lg:flex gap-2 {% if session['page'] == 'settings' %} bg-gray-700 {% endif %} hover:bg-gray-700 transition-all px-2 py-2 rounded-md"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="size-5 relative top-[0.1em]"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-            />
-          </svg>
-          <div class="hidden lg:block">Settings</div></a
-        >
-
-        <a class="gap-2 opacity-50 px-2 py-2 hidden lg:flex"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="size-5 relative top-[0.1em]"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-            />
-          </svg>
-          {{session['username']}}</a
-        >
-        <a
-          href="/logout"
-          class="hidden lg:flex gap-2 px-2 py-2 hover:bg-gray-700 transition-all rounded-md"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="size-5 relative top-[0.1em]"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15"
-            />
-          </svg>
-          <div class="hidden lg:block">Log out</div></a
-        >
-        <a
-          onclick="navToggle()"
-          class="flex lg:hidden gap-2 px-2 py-2 transition-all ease-in-out rounded-md"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="size-6 relative top-[0.1em]"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-            />
-          </svg>
-        </a>
+        </div>
       </div>
     </nav>
     {% with messages = get_flashed_messages(with_categories=true) %} {% if
     messages %}
     <div
       id="message"
-      class="pointer-events-none translate-y-[-5rem] transition-all duration-300 mx-auto flex justify-center w-full font-bold text-gray-800 text-center fixed top-4 z-50 px-auto"
+      class="pointer-events-none translate-y-[-5rem] transition-all duration-300 mx-auto flex justify-center w-full font-semibold text-gray-800 text-center fixed top-4 z-50 px-auto"
     >
       {% for category, message in messages %} {% if category == 'success' %}
       <div
-        class="bg-green-100 p-2 rounded-md border border-green-200 text-nowrap"
+        class="px-4 py-2 rounded-md text-nowrap flex flex-row bg-white border border-gray-100 shadow-md text-sm"
       >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2.5"
+          stroke="currentColor"
+          class="size-4 my-auto mr-2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="m4.5 12.75 6 6 9-13.5"
+          />
+        </svg>
         {{message}}
       </div>
       {% else %}
-      <div class="bg-red-100 p-2 rounded-md border border-red-200 text-nowrap">
+      <div
+        class="bg-red-100 px-4 py-2 rounded-md text-nowrap text-sm flex flex-row"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2.5"
+          stroke="currentColor"
+          class="size-4 my-auto mr-2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6 18 18 6M6 6l12 12"
+          />
+        </svg>
+
         {{message}}
       </div>
       {% endif %} {% endfor %}
     </div>
     {% endif %} {% endwith %}
-    <div class="lg:ml-52 lg:mr-24 lg:my-12 px-4 lg:ml-48 mt-20 lg:mt-12 w-full">
-      {% block body %} {% endblock %}
-    </div>
     <div
-      id="session_popup"
-      class="opacity-0 fixed transition-all fixed inset-0 bg-opacity-50 bg-black w-full h-full pointer-events-none flex justify-center scale-110"
+      class="lg:ml-[12.5rem] lg:mr-24 lg:py-6 px-4 w-full tracking-tight flex flex-col min-h-screen"
     >
+      <div class="h-full">{% block body %} {% endblock %}</div>
+      <footer>
+        <div class="container mx-auto py-2 mt-12">
+          <div class="text-center text-gray-500">
+            <div class="logo text-md">Edura</div>
+            <div class="text-xs">&copy; All rights reserved.</div>
+          </div>
+        </div>
+      </footer>
+    </div>
+    <div id="session_popup" class="popup" onclick="nav_popup('session_popup')">
       <div
-        class="bg-white w-[25rem] lg:w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
+        class="popup-content w-[25rem] lg:w-[30rem]"
         onclick="event.stopPropagation()"
       >
         <form action="/add_study" method="post">
-          <div class="text-2xl font-bold">Log Study Session</div>
+          <div>
+            <div class="text-2xl font-semibold">Log Study Session</div>
+            <div class="text-sm text-gray-500">
+              Fill out your study sesion details to complete it
+            </div>
+          </div>
           <input
-            class="bg-gray-100 p-2 rounded-md w-full my-6"
+            class="my-6"
             autocomplete="off"
             name="description"
             placeholder="Description"
             type="text"
+            required
           />
           <div class="flex flex-row gap-2">
-            <button
-              type="submit"
-              class="bg-gray-800 p-2 font-bold text-white rounded-md w-full text-center"
-            >
+            <button type="submit" class="btn-secondary w-full text-center">
               Complete Study Session
             </button>
           </div>
         </form>
       </div>
     </div>
+    <div id="start_popup" class="popup" onclick="nav_popup('start_popup')">
+      <div
+        class="popup-content w-[25rem] lg:w-[30rem]"
+        onclick="event.stopPropagation()"
+      >
+        {% for class in classes %}
+        <a
+          href="{{ url_for('add_study', class_id=class[0]) }}"
+          onclick="startTimer()"
+          class="p-2 font-semibold text-lg flex flex-row rounded-md text-ellipsis overflow-hidden text-nowrap w-full hover:scale-[1.01] transition-all hover:bg-gray-100"
+          ><div
+            class="{{ class[2] | colourDictionary }} w-4 h-4 rounded-md my-auto justify-center mr-2"
+          ></div>
+          <span class="w-full truncate">{{class[1]}}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
     <div
       id="menu"
-      class="top-0 left-0 flex flex-col w-full h-full z-50 bg-white opacity-0 pointer-events-none transition-all px-4 py-4 fixed"
+      class="top-0 left-0 flex flex-col w-full h-full z-50 bg-white opacity-0 pointer-events-none transition-all px-8 py-4 fixed"
     >
       <div class="flex flex-row w-full justify-between">
         <a href="/dashboard" class="logo">Edura</a>
@@ -361,8 +374,9 @@
           </svg>
         </div>
       </div>
-      <div class="mt-24 flex flex-col gap-12 text-xl font-bold">
+      <div class="mt-16 flex flex-col gap-6 text-xl font-semibold">
         <a href="/dashboard">Dashboard</a>
+        <a href="/tasks">Tasks</a>
         {% if session['user_type'] == 'student' %}
         <a href="/sessions">Sessions</a>
         {% endif %}
@@ -370,6 +384,7 @@
         <a href="/logout">Logout</a>
       </div>
     </div>
+
     <script>
       const menu = document.getElementById("menu");
 
@@ -458,26 +473,12 @@
 
       function nav_popup(popup_id) {
         let popup = document.getElementById(popup_id);
-        if (popup.classList.contains("opacity-0")) {
-          popup.classList.add("opacity-100", "scale-100");
-          popup.classList.remove(
-            "opacity-0",
-            "pointer-events-none",
-            "scale-110"
-          );
+        if (popup.classList.contains("active")) {
+          popup.classList.remove("active");
         } else {
-          popup.classList.add("opacity-0", "pointer-events-none", "scale-110");
-          popup.classList.remove("opacity-100", "scale-100");
+          popup.classList.add("active");
         }
       }
     </script>
-    <style>
-      .logo {
-        font-family: "Merriweather Sans", sans-serif;
-        letter-spacing: -1px;
-        padding-top: auto;
-        padding-bottom: auto;
-      }
-    </style>
   </body>
 </html>

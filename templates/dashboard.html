@@ -1,58 +1,371 @@
-{% extends "layouts/layout_user.html" %} {% block body %} {% if classes %}
-<div
-  class="text-4xl lg:text-5xl font-bold mb-4 w-full text-ellipsis overflow-hidden"
->
-  {{user_data[3]}}'s Dashboard
-</div>
-{% endif %}
+{% extends "layouts/layout_user.html" %} {% block body %}
 
 <!---->
 {% if session['user_type'] == 'student' %} {% if classes %}
-<div class="flex lg:flex-row flex-col gap-2">
-  <div class="flex flex-col gap-2 grow">
-    <div
-      class="lg:border bg-white border-gray-100 lg:shadow-md p-4 w-full rounded-md h-96"
-    >
-      {% if sessions %} {{ resources|safe }}
-      <div class="w-full h-full">{{ bar_div|safe }}</div>
-      {{bar_script|safe}} {% else %}
-      <div class="w-full text-center align-middle my-12 font-bold text-xl">
-        Start studying to view your data
-      </div>
-      {% endif %}
-    </div>
-
-    <div class="text-4xl font-bold hidden">Assignments</div>
-    <div
-      class="lg:border bg-white border-gray-100 lg:shadow-md p-4 w-full rounded-md"
-    >
-      <div class="text-2xl font-bold mb-2">Recent Sessions</div>
-      {% for session in sessions %}
+<div class="text-2xl font-semibold mb-2 align-middle opacity-0 lg:opacity-100">
+  Dashboard
+</div>
+<div class="flex lg:flex-row flex-col gap-4">
+  <div class="flex flex-col gap-4 grow">
+    <container class="flex flex-row gap-4">
       <div
-        class="flex flex-col lg:mx-4 py-4 border-t {%if loop.last %} border-b {% endif %}"
+        class="lg:border bg-white border-gray-200 lg:shadow-md p-4 grow rounded-md h-96"
       >
-        <div class="flex flex-row gap-2 justify-between items-end">
-          <div
-            class="text-xl font-bold max-w-auto text-ellipsis overflow-hidden text-nowrap"
-          >
-            {{session[5]}}
+        {% if sessions %}
+        <div class="text-2xl font-semibold mb-2">Study This Month</div>
+        <div class="flex flex-row gap-4">
+          <div class="flex flex-col">
+            <div class="text-xs text-gray-500 mt-2">Daily Average (month)</div>
+            <div class="text-lg font-semibold">
+              {{ (graph_totals|sum / 30)|round | timeFormat() }}
+            </div>
           </div>
-          <div
-            id="study_show_session_id_{{session[0]}}"
-            class="text-xl font-bold"
-          >
-            {{ session[3] | duration(session[4]) }}
+          <div class="flex flex-col">
+            <div class="text-xs text-gray-500 mt-2">Weekly Average (month)</div>
+            <div class="text-lg font-semibold">
+              {{ (graph_totals|sum / 4)|round | timeFormat() }}
+            </div>
           </div>
         </div>
-        <div class="text-sm text-gray-500">
-          {{session[3] | dateTimeFormat()}}
+        <div class="h-64 max-w-full">
+          <div
+            id="chartjs-tooltip"
+            class="absolute bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-sm font-medium text-gray-800 pointer-events-none opacity-0 transition-all duration-200 ease-out z-10"
+          ></div>
+          <canvas id="dailyTotals"></canvas>
+        </div>
+        {% endif %}
+      </div>
+      <div class="flex flex-col gap-4 w-36 hidden">
+        <div
+          class="flex flex-col border-gray-200 rounded-md shadow-md p-2 border items-center pb-4"
+        >
+          <div class="text-xs text-gray-500 mt-2">Today</div>
+          <div class="text-xl font-semibold">
+            {{ graph_totals[29] | timeFormat() }}
+          </div>
+        </div>
+        <div
+          class="flex flex-col border-gray-200 rounded-md shadow-md p-2 border items-center pb-4"
+        >
+          <div class="text-xs text-gray-500 mt-2">This Week</div>
+          <div class="text-xl font-semibold">
+            {{ (graph_totals|sum / 4)|round | timeFormat() }}
+          </div>
+        </div>
+        <div
+          class="flex flex-col border-gray-200 rounded-md shadow-md p-2 border items-center pb-4"
+        >
+          <div class="text-xs text-gray-500 mt-2">This Month</div>
+          <div class="text-xl font-semibold">
+            {{ (graph_totals|sum)|round | timeFormat() }}
+          </div>
         </div>
       </div>
-      {% endfor %}
+    </container>
+    <div
+      class="lg:border bg-white border-gray-200 lg:shadow-md p-4 w-full rounded-md"
+    >
+      <div class="flex flex-row justify-between">
+        <div class="text-2xl font-semibold">Tasks</div>
+        <button
+          onclick="popup('task_popup')"
+          class="cursor-pointer btn-secondary flex flex-row mb-2"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="3"
+            stroke="currentColor"
+            class="w-4 h-4 justify-center mr-2 my-auto"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 4.5v15m7.5-7.5h-15"
+            />
+          </svg>
+          <div class="text-sm">Create Task</div>
+        </button>
+      </div>
+      <div class="flex flex-col border-b">
+        {% for task in task_data %}
+        <div
+          class="gap-4 border-t px-4 py-2 flex flex-row {% if task[8] == 1 %} hidden{% endif %}"
+          data-task
+          data-task-name="{{task[7]}}"
+          data-task-class="{{task[2]}}"
+          data-task-created="{{task[4]}}"
+          data-task-due-date="{{task[5] or ''}}"
+          data-task-status="{% if task[8] == 1 %}completed{% elif task[5] %}{% set due_status = task[5] | dueDateStatus %}{% if due_status %}{{due_status.status}}{% else %}pending{% endif %}{% else %}pending{% endif %}"
+          data-task-type="{% if task[10] %}assigned{% else %}personal{% endif %}"
+        >
+          {% if task[8] == 1 %}
+          <!-- Task is completed -->
+          <input
+            type="checkbox"
+            checked
+            class="my-auto w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 border-2 rounded focus:ring-0 cursor-pointer"
+            onchange="completeTask({{task[0]}})"
+          />
+          {% else %}
+          <!-- Task is not completed -->
+          <input
+            type="checkbox"
+            class="my-auto w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 border-2 rounded focus:ring-0 cursor-pointer"
+            onchange="completeTask({{task[0]}})"
+          />
+          {% endif %}
+          <container class="flex flex-col w-full">
+            <div class="flex flex-row justify-between">
+              <div>
+                <div class="text-lg font-semibold">{{task[7]}}</div>
+                <div class="flex flex-row">
+                  <span
+                    class="mr-2 my-auto flex w-4 h-4 rounded-md {{ task[3] | colourDictionary() }}"
+                  ></span
+                  >{{task[2]}}
+                </div>
+              </div>
+              <container class="flex flex-col">
+                <!--TAGS-->
+                <div
+                  id="tags"
+                  class="hidden lg:flex flex-row gap-2 mt-1 text-nowrap"
+                >
+                  {% if task[10] %}
+                  <div
+                    class="rounded-md bg-blue-100 text-blue-500 font-semibold my-auto px-2 py-1 flex text-xs items-center"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="size-4 my-auto mr-1"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                      />
+                    </svg>
+                    Assigned
+                  </div>
+                  {% else %}
+                  <div
+                    class="rounded-md bg-green-100 text-green-600 font-semibold my-auto px-2 py-1 flex text-xs items-center"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="size-4 my-auto mr-1"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                      />
+                    </svg>
+
+                    Personal
+                  </div>
+                  {% endif %} {% if task[5] and task[8] != 1 %} {% set
+                  due_status = task[5] | dueDateStatus %} {% if due_status %} {%
+                  if due_status.status == 'overdue' %}
+                  <div
+                    class="rounded-md bg-red-100 font-semibold my-auto px-2 py-1 flex text-xs items-center text-red-600"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="size-4 my-auto mr-1"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                      />
+                    </svg>
+                    {{due_status.text}}
+                  </div>
+                  {% elif due_status.status == 'due_today' %}
+                  <div
+                    class="rounded-md bg-yellow-100 font-semibold my-auto px-2 py-1 flex text-xs items-center text-yellow-700"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="size-4 my-auto mr-1"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
+                    </svg>
+                    {{due_status.text}}
+                  </div>
+                  {% elif due_status.status == 'due_soon' %}
+                  <div
+                    class="rounded-md bg-yellow-100 text-yellow-700 font-semibold my-auto px-2 py-1 flex text-xs items-center"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="size-4 my-auto mr-1"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
+                    </svg>
+                    {{due_status.text}}
+                  </div>
+                  {% endif %} {% endif %} {% endif %}
+                </div>
+              </container>
+            </div>
+            <!--DATES-->
+            <div class="flex text-xs text-gray-500" id="dates">
+              {% if task[5] %}
+              <div>Due {{task[5] | dateTimeFormat()}}</div>
+              {% else %}
+              <div>No due date</div>
+              {% endif %}
+            </div>
+            <div
+              id="tags"
+              class="lg:hidden flex flex-row gap-2 mt-1 text-nowrap"
+            >
+              {% if task[10] %}
+              <div
+                class="rounded-md bg-blue-100 text-blue-500 font-semibold my-auto px-2 py-1 flex text-xs items-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="size-4 my-auto mr-1"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                  />
+                </svg>
+                Assigned
+              </div>
+              {% else %}
+              <div
+                class="rounded-md bg-green-100 text-green-600 font-semibold my-auto px-2 py-1 flex text-xs items-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="size-4 my-auto mr-1"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                  />
+                </svg>
+
+                Personal
+              </div>
+              {% endif %} {% if task[5] and task[8] != 1 %} {% set due_status =
+              task[5] | dueDateStatus %} {% if due_status %} {% if
+              due_status.status == 'overdue' %}
+              <div
+                class="rounded-md bg-red-100 font-semibold my-auto px-2 py-1 flex text-xs items-center text-red-600"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="size-4 my-auto mr-1"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                  />
+                </svg>
+                {{due_status.text}}
+              </div>
+              {% elif due_status.status == 'due_today' %}
+              <div
+                class="rounded-md bg-yellow-100 font-semibold my-auto px-2 py-1 flex text-xs items-center text-yellow-700"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="size-4 my-auto mr-1"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  />
+                </svg>
+                {{due_status.text}}
+              </div>
+              {% elif due_status.status == 'due_soon' %}
+              <div
+                class="rounded-md bg-yellow-100 text-yellow-700 font-semibold my-auto px-2 py-1 flex text-xs items-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="size-4 my-auto mr-1"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  />
+                </svg>
+                {{due_status.text}}
+              </div>
+              {% endif %} {% endif %} {% endif %}
+            </div>
+          </container>
+        </div>
+        {% endfor %}
+      </div>
       <div class="flex justify-between mt-4">
         <a
-          class="bg-gray-800 font-bold text-white mx-auto text-center py-2 px-4 rounded-md cursor-pointer flex flex-row gap-2 hover:bg-gray-700 transition-all"
-          href="/sessions"
+          class="btn-secondary mx-auto text-center text-sm rounded-md cursor-pointer flex flex-row gap-2"
+          href="/tasks"
         >
           View all
           <svg
@@ -61,7 +374,7 @@
             viewBox="0 0 24 24"
             stroke-width="2.5"
             stroke="currentColor"
-            class="size-5 relative top-[.1rem]"
+            class="size-4 relative my-auto"
           >
             <path
               stroke-linecap="round"
@@ -74,105 +387,98 @@
     </div>
   </div>
 
-  <div class="flex flex-col gap-2 w-96">
+  <div class="flex flex-col gap-4 w-96">
     <div
-      class="rounded-md bg-white lg:border border-gray-100 lg:shadow-md px-4 py-4"
+      class="rounded-md bg-white lg:border border-gray-200 lg:shadow-md px-4 py-4"
     >
-      <div class="text-2xl font-bold">My Classes</div>
+      <div class="text-2xl font-semibold">My Classes</div>
       <form action="/join_code" method="post">
         <div class="flex flex-row gap-2">
           <input
-            class="text-lg font-bold bg-white border-gray-100 border px-2 grow rounded-md"
+            class="text-md font-semibold"
             autocomplete="off"
             name="join_code"
+            required
             placeholder="Class Code"
             type="text"
           />
-          <button
-            type="submit"
-            class="bg-gray-800 py-2 px-4 font-bold text-lg text-white rounded-md hover:bg-gray-700 transition-all"
-          >
-            Join
-          </button>
+          <button type="submit" class="btn-secondary">Join</button>
         </div>
       </form>
-
       {% for class in classes %}
       <div
-        class="class_link flex flex-col col-span-1 row-span-1 transition-all py-2 border-b last:border-0 border-gray-100 w-full"
+        class="class_link flex flex-col transition-all py-2 border-b last:border-0 border-gray-200 w-full"
       >
         <div class="flex flex-row gap-2 h-full w-full">
-          <div class="flex flex-col justify-between">
-            <div
-              class="text-2xl h-12 w-12 font-bold text-white {{ class[2] | colourDictionary }} rounded-md p-4"
-            ></div>
-          </div>
-
           <div
-            class="text-md row-span-1 font-bold col-span-1 text-ellipsis overflow-hidden text-left"
+            class="h-4 w-4 font-semibold rounded-md mt-[.4rem] {{ class[2] | colourDictionary }}"
+          ></div>
+          <div
+            class="text-lg font-semibold text-ellipsis overflow-hidden text-left"
           >
             {{class[1]}}
           </div>
         </div>
+        <div class="text-xs text-gray-500 ml-6">{{class[3]}}</div>
       </div>
       {% endfor %}
     </div>
+
     <div
-      class="rounded-md bg-white lg:border border-gray-100 lg:shadow-md px-4 py-4 w-full h-[32rem]"
+      class="rounded-md bg-white lg:border border-gray-200 lg:shadow-md px-4 py-4 w-full h-[32rem]"
     >
-      <div class="text-2xl font-bold">Studying Distribution</div>
-      {% if donut_div %} {{ resources|safe }}
-      <div class="w-full h-full relative top-[-1rem]">{{ donut_div|safe }}</div>
-      {{donut_script|safe}} {% else %}
-      <div class="">Log a study session to view your data</div>
+      <div class="text-2xl font-semibold">Studying Distribution</div>
+      {% if donut_labels and donut_data %}
+      <div class="w-full h-96 mt-4 relative">
+        <div
+          id="donut-tooltip"
+          class="absolute bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-sm font-medium text-gray-800 pointer-events-none opacity-0 transition-all duration-200 ease-out z-10"
+        ></div>
+        <canvas id="studyDistribution"></canvas>
+      </div>
+      {% else %}
+      <div class="mt-4">Log a study session to view your data</div>
       {% endif %}
     </div>
   </div>
 </div>
 {% else %}
 <div class="w-full flex flex-col text-center gap-2">
-  <div class="text-3xl font-bold mt-24">
+  <div class="text-3xl font-semibold mt-24">
     Enter your teacher's class code to join a class
   </div>
   <form action="/join_code" method="post">
     <div
-      class="flex flex-row gap-2 text-3xl border-gray-100 border p-2 rounded-md bg-white mx-auto w-[26rem] justify-between transition-all hover:shadow-[0_0_20px_1px_rgba(59,130,246,.3)]"
+      class="flex flex-row gap-2 text-lg border-gray-200 border p-2 rounded-md bg-white mx-auto w-[26rem] justify-between transition-all hover:shadow-[0_0_20px_1px_rgba(59,130,246,.3)]"
     >
       <input
-        class="font-bold focus:outline-0 px-2 w-72"
+        class="font-semibold w-72"
         autocomplete="off"
         name="join_code"
         placeholder="Join Code"
         type="text"
       />
-      <button
-        type="submit"
-        class="bg-gray-800 py-2 px-4 font-bold text-white rounded-md hover:bg-gray-700 transition-all"
-      >
-        Join
-      </button>
+      <button type="submit" class="btn-secondary grow">Join</button>
     </div>
   </form>
 </div>
 {% endif %} {% else %}
 <div
-  class="text-3xl font-bold flex flex-row w-full align-middle justify-between my-2"
+  class="font-semibold tracking-tight flex flex-row w-full align-middle justify-between mt-16 lg:mt-0"
 >
-  <div class="my-auto align-middle">My Classes</div>
+  <div class="mt-auto text-2xl align-middle">My Classes</div>
 
   <button
     onclick="popup('class_popup')"
-    class="flex flex-row relative bg-gray-800 rounded-md p-2 text-white text-xl cursor-pointer"
+    class="btn-secondary flex flex-row relative text-md cursor-pointer lg:px-4 px-2"
   >
-    <span class="hidden lg:block">Create Class</span>
-
     <svg
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
-      stroke-width="2.5"
+      stroke-width="3"
       stroke="currentColor"
-      class="size-7 top-[.2rem]"
+      class="w-4 h-4 my-auto justify-center lg:mr-2"
     >
       <path
         stroke-linecap="round"
@@ -180,19 +486,21 @@
         d="M12 4.5v15m7.5-7.5h-15"
       />
     </svg>
+    <span class="hidden lg:block">Create Class</span>
   </button>
 </div>
+{% if classes[0] %}
 <div class="lg:grid lg:grid-cols-3 flex flex-col gap-4 w-full mt-3">
   {% for class in classes %}
   <a
     href="{{ url_for('view_class', class_id=class[0]) }}"
-    class="class_link flex flex-col w-full h-40 col-span-1 row-span-1 rounded-md border border-gray-100 lg:shadow-md bg-white hover:bg-gray-50 transition-all p-4"
+    class="class_link flex flex-col w-full h-40 col-span-1 row-span-1 rounded-md border border-gray-200 lg:shadow-md bg-white hover:bg-gray-50 transition-all p-4"
     data-original-url="{{ url_for('view_class', class_id=class[0]) }}"
   >
     <div class="flex flex-row gap-2 h-full w-full" onclick="event.stop">
       <div class="flex flex-col justify-between">
         <div
-          class="text-2xl h-20 w-20 font-bold text-white {{ class[4] | colourDictionary }} rounded-md p-4"
+          class="text-2xl h-20 w-20 font-semibold text-white {{ class[4] | colourDictionary }} rounded-md p-4"
         ></div>
         <div class="flex flex-row justify-between p-2">
           <button class="" onclick="popup('edit_class_popup', {{class[0]}})">
@@ -213,33 +521,39 @@
           </button>
         </div>
       </div>
-
-      <div
-        class="font-bold text-xl row-span-1 col-span-1 text-ellipsis overflow-hidden text-left"
-      >
-        {{class[1]}}
+      <div class="flex flex-col">
+        <div
+          class="font-semibold text-xl text-ellipsis overflow-hidden text-left"
+        >
+          {{class[1]}}
+        </div>
+        <div
+          class="text-sm text-gray-500 text-ellipsis overflow-hidden text-left"
+        >
+          {{class[5]}} students
+        </div>
       </div>
     </div>
   </a>
   <div
     id="class_id_{{class[0]}}"
     onclick="popup('edit_class_popup', {{class[0]}})"
-    class="opacity-0 transition-all fixed inset-0 bg-opacity-50 bg-black w-full h-full pointer-events-none flex justify-center scale-110"
+    class="popup"
   >
     <div
-      class="bg-white w-[25rem] lg:w-[30rem] rounded-md p-12 mx-auto my-auto align-middle"
+      class="popup-content w-[25rem] lg:w-[30rem]"
       onclick="event.stopPropagation()"
     >
-      <form action="/update_class" method="post" class="flex flex-col gap-2">
-        <div class="text-2xl font-bold">Edit Class</div>
+      <form action="/update_class" method="post" class="flex flex-col gap-4">
+        <div>
+          <div class="text-2xl font-semibold tracking-tight">Edit Class</div>
+          <div class="text-sm text-gray-500">
+            Update your class details for students to see
+          </div>
+        </div>
         <input type="hidden" name="class_id" value="{{class[0]}}" />
-        <input
-          type="text"
-          name="class_name"
-          value="{{class[1]}}"
-          class="bg-gray-100 p-2 rounded-md font-bold text-xl w-full"
-        />
-        <div class="flex flex-row gap-2 mb-4">
+        <input type="text" name="class_name" value="{{class[1]}}" />
+        <div class="flex flex-row gap-2">
           {% for colour in colours %}
           <label
             class="size-10 lg:size-12 rounded-md cursor-pointer {{ colour | colourDictionary }}"
@@ -266,63 +580,84 @@
           </label>
           {% endfor %}
         </div>
-
-        <div class="flex flex-row gap-2">
-          <div
-            class="bg-gray-200 p-2 font-bold rounded-md cursor-pointer w-1/2 text-center"
-            onclick="popup('edit_class_popup', {{class[0]}})"
-          >
-            Cancel
+        <div class="flex flex-col gap-2 mt-4">
+          <div class="flex flex-row gap-2">
+            <a
+              href="#"
+              onclick="deleteClass({{ class[0] }}); return false;"
+              class="btn-danger flex flex-row justify-center cursor-pointer w-1/2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="size-5 relative top-[.1rem] mr-1"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <div class="text-ellipsis overflow-hidden text-nowrap">
+                Delete "{{class[1]}}"?
+              </div>
+            </a>
+            <button
+              type="submit"
+              class="btn-secondary w-1/2 justify-center flex"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="size-6 mr-1"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="m4.5 12.75 6 6 9-13.5"
+                />
+              </svg>
+              <span class="mr-2">Save</span>
+            </button>
           </div>
-          <button
-            type="submit"
-            class="bg-gray-800 p-2 font-bold text-white rounded-md w-1/2 text-center"
-          >
-            Save
-          </button>
         </div>
-        <a
-          href="#"
-          onclick="deleteClass({{ class[0] }}); return false;"
-          class="bg-red-100 font-bold rounded-md py-2 px-4 flex flex-row justify-center cursor-pointer w-full text-red-800"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            class="size-5 relative top-[.1rem] mr-1"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
-              clip-rule="evenodd"
-            />
-          </svg>
-          <div class="text-ellipsis overflow-hidden text-nowrap">
-            Delete "{{class[1]}}"?
-          </div>
-        </a>
       </form>
     </div>
   </div>
   {% endfor %}
 </div>
-<div
-  id="class_popup"
-  class="opacity-0 transition-all fixed inset-0 bg-opacity-50 bg-black w-full h-full pointer-events-none flex justify-center scale-110"
-  onclick="popup('class_popup')"
->
+
+{% else %}
+<div class="w-full h-screen">
+  <div class="mt-48 flex items-center justify-center font-semibold text-2xl">
+    Create a class
+  </div>
+</div>
+{% endif %}
+
+<div id="class_popup" class="popup" onclick="popup('class_popup')">
   <div
-    class="bg-white w-[25rem] lg:w-[30rem] rounded-md p-12 mx-4 lg:mx-auto my-auto align-middle"
+    class="popup-content w-[25rem] lg:w-[30rem]"
     onclick="event.stopPropagation()"
   >
     <form action="/create_class" method="post" class="flex flex-col gap-4">
-      <div class="text-2xl font-bold">Create new class</div>
+      <div>
+        <div class="text-2xl font-semibold tracking-tight">
+          Create new class
+        </div>
+        <div class="text-sm text-gray-500 tracking-tight">
+          Students can join via join code or direct invite
+        </div>
+      </div>
+
       <input
-        class="bg-gray-100 p-2 rounded-md w-full"
         autocomplete="off"
         name="class_name"
-        placeholder="Class Name e.g. Mr Jacque's Software"
+        placeholder="Class name e.g. Mr Jacque's Software"
         type="text"
         required
       />
@@ -343,17 +678,14 @@
         </label>
         {% endfor %}
       </div>
-      <div class="flex flex-row gap-2">
+      <div class="flex flex-row gap-2 mt-4">
         <div
-          class="bg-gray-200 p-2 font-bold rounded-md cursor-pointer w-1/2 text-center"
+          class="bg-gray-200 p-2 font-semibold rounded-md cursor-pointer w-1/2 text-center"
           onclick="popup('class_popup')"
         >
           Cancel
         </div>
-        <button
-          type="submit"
-          class="bg-gray-800 p-2 font-bold text-white rounded-md w-1/2 text-center"
-        >
+        <button type="submit" class="btn-secondary w-1/2 text-center">
           Create Class
         </button>
       </div>
@@ -361,10 +693,125 @@
   </div>
 </div>
 
+{% endif %}
+<div id="task_popup" class="popup" onclick="popup('task_popup')">
+  <div
+    class="popup-content w-[25rem] lg:w-[30rem]"
+    onclick="event.stopPropagation()"
+  >
+    <form action="/create_task" method="post" class="flex flex-col gap-4">
+      <div>
+        <div class="text-2xl font-semibold tracking-tight">Create new task</div>
+        <div class="text-sm text-gray-600 font-normal tracking-tight">
+          Set up a task to complete
+        </div>
+      </div>
+      <div class="flex flex-col">
+        <label for="class_id" class="text-xs font-semibold">Task Name</label>
+        <input
+          autocomplete="off"
+          name="task_description"
+          placeholder="e.g. Math Chapter 15A"
+          type="text"
+          required
+        />
+      </div>
+
+      <div class="flex flex-col">
+        <label for="class_id" class="text-xs font-semibold">Class</label>
+        <select
+          name="class_id"
+          id="class_id"
+          required
+          class="block w-full border border-gray-300 rounded-md px-1 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+        >
+          <option value="" disabled selected>Select a class</option>
+          {% for class in classes %}
+
+          <option value="{{ class[0] }}">{{ class[1] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <!-- More Options Toggle -->
+        <div class="flex flex-col">
+          <button
+            type="button"
+            onclick="toggleMoreOptions()"
+            class="flex items-center justify-between w-full text-left text-xs font-semibold text-gray-600 hover:text-gray-800 transition-colors duration-200"
+          >
+            <span>More Options</span>
+            <svg
+              id="moreOptionsIcon"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-4 h-4 transition-transform duration-300"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Expandable More Options Section -->
+        <div
+          id="moreOptionsSection"
+          class="overflow-hidden flex flex-col gap-4 transition-all duration-300 ease-in-out max-h-0 opacity-0"
+          style="max-height: 0"
+        >
+          <div class="flex flex-col gap-4 pt-2">
+            <div class="flex flex-col">
+              <label for="duration" class="text-xs font-semibold"
+                >Estimated Time</label
+              >
+              <input
+                autocomplete="off"
+                name="duration"
+                placeholder="e.g. 2 hours"
+                type="text"
+                class="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+              />
+            </div>
+
+            <div class="flex flex-col">
+              <label for="due_date" class="text-xs font-semibold"
+                >Due Date</label
+              >
+              <input
+                autocomplete="off"
+                name="due_date"
+                placeholder="e.g. 2024-12-31"
+                type="date"
+                class="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-row gap-2 mt-4">
+        <div class="btn-tertiary w-1/2" onclick="popup('task_popup')">
+          Cancel
+        </div>
+        <button type="submit" class="btn-secondary w-1/2 text-center">
+          Create Task
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   // Render the original URL via Jinja
 
   function popup(popup_id, class_id) {
+    console.log(popup_id);
     let popup;
     if (popup_id == "edit_class_popup") {
       popup = document.getElementById(`class_id_${class_id}`);
@@ -372,31 +819,68 @@
       popup = document.getElementById(popup_id);
     }
 
-    if (popup.classList.contains("opacity-0")) {
-      popup.classList.add("opacity-100", "scale-100");
-      popup.classList.remove("opacity-0", "pointer-events-none", "scale-110");
-      if (popup_id == "edit_class_popup") {
-        toggleClassLink(true);
-      }
-    } else {
-      popup.classList.add("opacity-0", "pointer-events-none", "scale-110");
-      popup.classList.remove("opacity-100", "scale-100");
+    if (popup.classList.contains("active")) {
+      popup.classList.remove("active");
       if (popup_id == "edit_class_popup") {
         toggleClassLink(false);
       }
+    } else {
+      popup.classList.add("active");
+      if (popup_id == "edit_class_popup") {
+        toggleClassLink(true);
+      }
     }
+  }
 
-    function toggleClassLink(popup) {
-      const a = document.querySelectorAll(".class_link");
-      a.forEach((el) => {
-        let originalUrl = el.getAttribute("data-original-url");
-        if (popup) {
-          el.setAttribute("href", "#");
-        } else {
-          el.setAttribute("href", originalUrl);
-        }
-      });
+  function toggleMoreOptions() {
+    const section = document.getElementById("moreOptionsSection");
+    const icon = document.getElementById("moreOptionsIcon");
+
+    if (section.style.maxHeight === "0px" || section.style.maxHeight === "") {
+      // Expand
+      section.style.maxHeight = section.scrollHeight + "px";
+      section.classList.remove("opacity-0");
+      section.classList.add("opacity-100");
+      icon.style.transform = "rotate(-90deg)";
+    } else {
+      // Collapse
+      section.style.maxHeight = "0px";
+      section.classList.remove("opacity-100");
+      section.classList.add("opacity-0");
+      icon.style.transform = "rotate(0deg)";
     }
+  }
+
+  function deleteTask(task_id) {
+    const formData = new FormData();
+    formData.append("task_id", task_id);
+
+    fetch("/delete_task", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => {
+        if (response.ok) {
+          location.reload();
+        } else {
+          console.error("Failed to delete task");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+
+  function toggleClassLink(popup) {
+    const a = document.querySelectorAll(".class_link");
+    a.forEach((el) => {
+      let originalUrl = el.getAttribute("data-original-url");
+      if (popup) {
+        el.setAttribute("href", "#");
+      } else {
+        el.setAttribute("href", originalUrl);
+      }
+    });
   }
 
   function deleteClass(class_id) {
@@ -405,5 +889,314 @@
     });
     location.reload();
   }
+
+  function completeTask(task_id) {
+    const formData = new FormData();
+    formData.append("task_id", task_id);
+
+    fetch("/complete_task", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          console.error("Failed to complete task");
+        } else {
+          window.location.reload();
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
 </script>
-{% endif %} {% endblock %}
+
+<script>
+  const ctx = document.getElementById("dailyTotals");
+
+  // External tooltip handler
+  const getOrCreateTooltip = (chart) => {
+    let tooltipEl = chart.canvas.parentNode.querySelector('#chartjs-tooltip');
+    return tooltipEl;
+  };
+
+  const externalTooltipHandler = (context) => {
+    // Tooltip Element
+    const {chart, tooltip} = context;
+    const tooltipEl = getOrCreateTooltip(chart);
+
+    // Hide if no tooltip
+    if (tooltip.opacity === 0) {
+      tooltipEl.style.opacity = 0;
+      return;
+    }
+
+    // Set Text
+    if (tooltip.body) {
+      const titleLines = tooltip.title || [];
+      const bodyLines = tooltip.body.map(b => b.lines);
+
+      const tableHead = document.createElement('div');
+      tableHead.className = 'text-xs text-gray-500 mb-1';
+
+      titleLines.forEach(title => {
+        const span = document.createElement('span');
+        span.textContent = title;
+        tableHead.appendChild(span);
+      });
+
+      const tableBody = document.createElement('div');
+      tableBody.className = 'font-semibold text-black';
+
+      bodyLines.forEach((body, i) => {
+        const colors = tooltip.labelColors[i];
+        const span = document.createElement('span');
+
+        // Convert seconds to hours and minutes for display
+        const dataIndex = tooltip.dataPoints[0].dataIndex;
+        const value = tooltip.dataPoints[0].raw;
+        const totalMinutes = Math.round(value / 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+
+        // Format display string based on if there are hours
+        if (hours > 0) {
+          span.innerHTML = `${hours}h ${minutes}m`;
+        } else {
+          span.innerHTML = `${minutes}m`;
+        }
+        tableBody.appendChild(span);
+      });
+
+      // Clear previous content
+      while (tooltipEl.firstChild) {
+        tooltipEl.firstChild.remove();
+      }
+
+      // Add new content
+      tooltipEl.appendChild(tableHead);
+      tooltipEl.appendChild(tableBody);
+    }
+
+    const {offsetLeft: positionX, offsetTop: positionY} = chart.canvas;
+
+    // Calculate new position
+    const newLeft = positionX + tooltip.caretX;
+    const newTop = positionY + tooltip.caretY;
+
+    // Show tooltip first if hidden
+    if (tooltipEl.style.opacity == 0) {
+      tooltipEl.style.opacity = 1;
+    }
+
+    // Apply position with transform for smooth transition
+    tooltipEl.style.left = newLeft + 'px';
+    tooltipEl.style.top = newTop + 'px';
+    tooltipEl.style.transform = 'translate(-50%, -100%)';
+    tooltipEl.style.marginTop = '-8px';
+  };
+
+  // Format dates to dd/mm and reverse order (most recent on right)
+  const originalLabels = {{ graph_days | safe }};
+  const originalData = {{ graph_totals | safe }};
+
+  const formattedLabels = originalLabels.map(date => {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}`;
+  });
+
+  // Reverse both arrays so most recent data appears on the right
+  const reversedLabels = formattedLabels.reverse();
+  const reversedData = originalData.reverse();
+
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: reversedLabels,
+      datasets: [
+        {
+          label: "Study Time",
+          borderWidth: 3,
+          tension: 0.4,
+          data: reversedData,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)', // Semi-transparent blue-500
+          fill: 'start',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        filler: {
+          propagate: false,
+        },
+        tooltip: {
+          enabled: false,
+          external: externalTooltipHandler,
+        },
+      },
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          display: false,
+          grid: {
+            display: false,
+          },
+          ticks: {
+            callback: function(value) {
+              // Convert seconds to minutes
+              const minutes = Math.round(value / 60);
+              return minutes + 'm';
+            }
+          }
+        },
+      },
+    },
+  });
+</script>
+
+<script>
+  // Donut chart for studying distribution
+  {% if donut_labels and donut_data %}
+  const donutCtx = document.getElementById('studyDistribution');
+
+  // External tooltip handler for donut chart
+  const getOrCreateDonutTooltip = (chart) => {
+    let tooltipEl = chart.canvas.parentNode.querySelector('#donut-tooltip');
+    return tooltipEl;
+  };
+
+  const externalDonutTooltipHandler = (context) => {
+    // Tooltip Element
+    const {chart, tooltip} = context;
+    const tooltipEl = getOrCreateDonutTooltip(chart);
+
+    // Hide if no tooltip
+    if (tooltip.opacity === 0) {
+      tooltipEl.style.opacity = 0;
+      return;
+    }
+
+    // Set Text
+    if (tooltip.body) {
+      const titleLines = tooltip.title || [];
+      const bodyLines = tooltip.body.map(b => b.lines);
+
+      const tableHead = document.createElement('div');
+      tableHead.className = 'text-xs text-gray-500 mb-1';
+
+      titleLines.forEach(title => {
+        const span = document.createElement('span');
+        span.textContent = title;
+        tableHead.appendChild(span);
+      });
+
+      const tableBody = document.createElement('div');
+      tableBody.className = 'font-semibold text-black';
+
+      bodyLines.forEach((body, i) => {
+        const span = document.createElement('span');
+
+        // Get the actual data value in minutes
+        const dataIndex = tooltip.dataPoints[0].dataIndex;
+        const minutes = tooltip.dataPoints[0].parsed;
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+
+        if (hours > 0) {
+          span.innerHTML = `${hours}h ${remainingMinutes}m`;
+        } else {
+          span.innerHTML = `${minutes}m`;
+        }
+        tableBody.appendChild(span);
+      });
+
+      // Clear previous content
+      while (tooltipEl.firstChild) {
+        tooltipEl.firstChild.remove();
+      }
+
+      // Add new content
+      tooltipEl.appendChild(tableHead);
+      tooltipEl.appendChild(tableBody);
+    }
+
+    const {offsetLeft: positionX, offsetTop: positionY} = chart.canvas;
+
+    // Calculate new position
+    const newLeft = positionX + tooltip.caretX;
+    const newTop = positionY + tooltip.caretY;
+
+    // Show tooltip first if hidden
+    if (tooltipEl.style.opacity == 0) {
+      tooltipEl.style.opacity = 1;
+    }
+
+    // Apply position with transform for smooth transition
+    tooltipEl.style.left = newLeft + 'px';
+    tooltipEl.style.top = newTop + 'px';
+    tooltipEl.style.transform = 'translate(-50%, -100%)';
+    tooltipEl.style.marginTop = '-8px';
+  };
+
+  const donutLabels = {{ donut_labels | safe }};
+  const donutData = {{ donut_data | safe }};
+  const donutColors = {{ donut_colors | safe }};
+
+  // Convert seconds to minutes for display
+  const donutDataMinutes = donutData.map(seconds => Math.round(seconds / 60));
+
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: donutLabels,
+      datasets: [{
+        data: donutDataMinutes,
+        backgroundColor: donutColors,
+        borderWidth: 3,
+        borderColor: '#ffffff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 20,
+            usePointStyle: true,
+            font: {
+              size: 12
+            }
+          }
+        },
+        tooltip: {
+          enabled: false,
+          external: externalDonutTooltipHandler,
+        }
+      },
+      cutout: '60%'
+    }
+  });
+  {% endif %}
+</script>
+{% endblock %}

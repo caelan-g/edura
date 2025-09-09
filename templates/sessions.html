@@ -1,14 +1,21 @@
 {% extends "layouts/layout_user.html" %} {% block body %}
-<div class="text-4xl font-bold mb-4">My Sessions</div>
+<div class="text-2xl font-semibold mb-2 mt-16 lg:mt-0">
+  {% if session['user_type'] == 'student' %}My Sessions{% else %}All Sessions{%
+  endif %}
+</div>
 <table
-  class="table-fixed w-full text-left text-lg lg:text-base shadow-md rounded-md border border-gray-100"
+  class="table-fixed w-full min-w-[40rem] text-left text-lg lg:text-base shadow-md rounded-md border border-gray-200 border-separate"
 >
   <thead>
-    <tr class="bg-gray-200">
+    <tr class="border-gray-200 font-semibold border-b-2">
       <!--<th class="p-2 rounded-tl-md w-2 lg:w-12">ID</th>-->
       <th class="p-2 rounded-tl-md w-1/2">Session Description</th>
       <th class="p-2 lg:w-24">Duration</th>
-      <th class="p-2 lg:w-60 rounded-tr-md">Date</th>
+      {% if session['user_type'] == 'teacher' %}
+      <th class="p-2 lg:w-32">Student</th>
+      {% endif %}
+      <th class="p-2 lg:w-60">Date</th>
+      <th class="p-2 lg:w-60 rounded-tr-md">Class</th>
       <!--<th class="p-2 rounded-tr-md w-12">A</th>-->
     </tr>
   </thead>
@@ -18,12 +25,17 @@
       <!--<td class="p-2 {% if loop.last %} rounded-bl-md{% endif %}">
         {{row[0]}}
       </td>-->
-      <td class="p-2 {% if loop.last %} rounded-bl-md{% endif %}">
-        {{row[5]}}
-      </td>
-      <td class="p-2">{{ row[3] | duration(row[4]) }}</td>
-      <td class="p-2 font-bold {% if loop.last %} rounded-br-md{% endif %}">
-        {{row[3] | dateTimeFormat()}}
+      <td class="p-2">{{row[3]}}</td>
+      <td class="p-2">{{ row[1] | duration(row[2]) }}</td>
+      {% if session['user_type'] == 'teacher' %}
+      <td class="p-2">{{row[6]}}</td>
+      {% endif %}
+      <td class="p-2">{{row[1] | dateTimeFormat()}}</td>
+      <td class="p-2 flex flex-row items-baseline">
+        <span
+          class="flex w-4 h-4 rounded-md mr-2 my-auto {{ row[5] | colourDictionary() }}"
+        ></span>
+        {{row[4]}}
       </td>
       <!--<td
         class="p-2 {% if loop.last %} rounded-br-md {% endif %} overflow-hidden"

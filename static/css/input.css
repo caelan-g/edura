@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for your app */
+@layer base {
+  html {
+    font-family: "Inter", system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .logo {
+    font-family: "Merriweather Sans", sans-serif;
+    letter-spacing: -1px;
+  }
+
+  .nav-link {
+    @apply gap-2 hover:bg-gray-700 transition-all px-2 py-2 rounded-md;
+  }
+
+  .nav-link.active {
+    @apply bg-gray-700;
+  }
+
+  .btn-primary {
+    @apply bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition-all;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-md transition-all;
+  }
+
+  .btn-tertiary {
+    @apply bg-gray-200 p-2 font-semibold rounded-md cursor-pointer text-center hover:bg-opacity-70 transition-all;
+  }
+
+  .btn-danger {
+    @apply bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md transition-all;
+  }
+
+  .popup {
+    @apply opacity-0 fixed transition-all inset-0 bg-black bg-opacity-50 w-full h-full pointer-events-none flex justify-center items-center scale-110 z-50;
+  }
+
+  .popup.active {
+    @apply opacity-100 scale-100 pointer-events-auto;
+  }
+
+  .popup-content {
+    @apply bg-white rounded-md p-12 mx-auto my-auto align-middle;
+  }
+
+  .timer-button {
+    @apply font-semibold rounded-full px-2 py-2 lg:py-1 flex justify-left gap-2 cursor-pointer transition-all;
+  }
+
+  .start-button {
+    @apply timer-button bg-blue-500 hover:bg-blue-600 w-24;
+  }
+
+  .stop-button {
+    @apply timer-button bg-red-500 hover:bg-red-600 w-28 justify-between;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+input {
+  @apply bg-white border shadow-sm transition-all text-gray-900 text-sm rounded-md focus:ring-2 ring-neutral-400 focus:outline-none block w-full p-2.5;
+}

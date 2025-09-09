@@ -10,20 +10,20 @@
 
   <!-- Foreground Content -->
   <div class="text-center z-10">
-    <div class="text-5xl font-bold lg:text-4xl">
+    <div class="text-5xl font-semibold lg:text-4xl">
       We couldn't find what you were looking for...
     </div>
     {% if session.get('user_id') %}
     <a
       href="/dashboard"
-      class="mt-6 text-xl p-2 text-white font-bold rounded-md bg-gray-800 inline-block hover:bg-gray-700 transition-all"
+      class="mt-6 text-xl p-2 text-white font-semibold rounded-md bg-gray-800 inline-block hover:bg-gray-700 transition-all"
     >
       Return home
     </a>
     {% else %}
     <a
       href="/"
-      class="mt-6 text-xl p-2 text-white font-bold rounded-md bg-gray-800 inline-block hover:bg-gray-700 transition-all"
+      class="mt-6 text-xl p-2 text-white font-semibold rounded-md bg-gray-800 inline-block hover:bg-gray-700 transition-all"
     >
       Go back
     </a>

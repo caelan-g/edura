@@ -1,11 +1,16 @@
 {% extends "layouts/layout_user.html" %} {% block body %}
 <!---->
 {% if class_data %}
-<div class="flex flex-col lg:flex-row justify-between">
-  <div class="text-4xl font-bold">{{class_entity[1]}}</div>
+<div class="flex flex-col lg:flex-row justify-between mt-16 lg:mt-0">
+  <div class="text-2xl mt-auto font-semibold flex flex-row">
+    <span
+      class="my-auto mr-1 flex w-4 h-4 rounded-md {{ class_entity[4] | colourDictionary }}"
+    ></span
+    >{{class_entity[1]}}
+  </div>
   <div class="flex flex-row gap-2">
     <div class="flex flex-row gap-2">
-      <div class="text-md font-bold bg-gray-200 p-2 rounded-md flex gap-2">
+      <div class="text-md font-semibold bg-gray-200 p-2 rounded-md flex gap-2">
         <div class="cursor-pointer" onclick="joincodePopup()">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -26,7 +31,7 @@
       </div>
       <a
         href="{{ url_for('view_class', class_id=class_entity[0])}}"
-        class="font-bold bg-gray-800 p-2 rounded-md text-white cursor-pointer"
+        class="font-semibold bg-gray-800 p-2 rounded-md text-white cursor-pointer"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -45,7 +50,7 @@
       </a>
     </div>
     <div
-      class="text-md text-white bg-gray-800 rounded-md p-2 font-bold flex flex-row cursor-pointer"
+      class="text-md text-white bg-gray-800 rounded-md p-2 font-semibold flex flex-row cursor-pointer"
       onclick="invitePopup()"
     >
       <svg
@@ -66,81 +71,701 @@
     </div>
   </div>
 </div>
-<div class="flex flex-col lg:flex-row gap-8 lg:gap-2 mt-4">
-  <div class="flex flex-col gap-2 grow">
-    <div class="text-3xl font-bold">Graphs</div>
-    <div class="text-md font-bold bg-white rounded-md p-4 lg:shadow-md border border-gray-100">
-      <div class="bg-white w-full h-96">
-        {% if bar_script %} {{ resources|safe }}
-        <div class="w-full h-full">{{ bar_div|safe }}</div>
-        {{bar_script|safe}} {% else %}
-        <div
-          class="mx-auto my-auto text-center align-middle font-bold text-2xl"
-        >
-          Join a class to view your data
+<div class="flex flex-col lg:flex-row gap-8 lg:gap-4 mt-2">
+  <div class="flex flex-col gap-4 grow">
+    <div class="gap-2 flex flex-col">
+      <div
+        class="text-md font-semibold bg-white rounded-md p-4 lg:shadow-md border border-gray-200"
+      >
+        <div class="text-2xl font-semibold">Studying This Week</div>
+        <div class="bg-white w-full h-96 relative font-normal">
+          {% if class_data %}
+          <div class="flex flex-row gap-4 absolute">
+            <div class="flex flex-col">
+              <div class="text-xs text-gray-500 mt-2">
+                Student Weekly Average
+              </div>
+              <div class="text-lg font-semibold">
+                {{average_study_time | timeFormat()}}
+              </div>
+            </div>
+          </div>
+          <canvas id="studyTimeChart" class="w-full h-full"></canvas>
+          <div
+            id="chartTooltip"
+            class="absolute bg-white border border-gray-200 rounded-lg shadow-lg p-3 pointer-events-none opacity-0 transition-all duration-300 ease-out z-10"
+            style="transform: translate(-50%, -100%)"
+          >
+            <div
+              class="text-sm font-medium text-gray-900"
+              id="tooltipLabel"
+            ></div>
+            <div class="text-sm text-gray-600" id="tooltipValue"></div>
+          </div>
+          {% else %}
+          <div
+            class="mx-auto my-auto text-center align-middle font-semibold text-2xl flex items-center justify-center h-full"
+          >
+            No students in this class yet
+          </div>
+          {% endif %}
         </div>
-        {% endif %}
       </div>
-      Average study time is {{average_study_time | timeFormat()}}
     </div>
-    <div class="flex flex-row justify-between">
-      <div class="text-3xl font-bold">Class</div>
-      <form method="get" action="{{ url_for('view_class', class_id=class_entity[0]) }}" class="flex flex-row">
-        <select name="sort_by" id="sort_by" class="bg-gray-100 border border-gray-200 p-1 rounded-md" onchange="this.form.submit()">
-          <option value="name" {% if request.args.get('sort_by') == 'name' %}selected{% endif %}>Name</option>
-          <option value="study_time" {% if request.args.get('sort_by') == 'study_time' %}selected{% endif %}>Total Study Time</option>
-      </select>
-      </form>
-    </div>
-    
-  
-    <table
-      class="table-auto text-left text-lg lg:text-base lg:shadow-md rounded-md border border-gray-100"
+    <section class="flex flex-row gap-4">
+      <container class="gap-2 flex flex-col">
+        <div class="flex flex-row justify-between">
+          <div class="text-2xl font-semibold">Class</div>
+          <form
+            method="get"
+            action="{{ url_for('view_class', class_id=class_entity[0]) }}"
+            class="flex flex-row"
+          >
+            <select
+              name="sort_by"
+              id="sort_by"
+              class="bg-white border border-gray-200 p-1 rounded-md"
+              onchange="this.form.submit()"
+            >
+              {% if request.args.get('sort_by') == 'name' %}
+              <option value="name" selected>Name</option>
+              {% else %}
+              <option value="name">Name</option>
+              {% endif %} {% if request.args.get('sort_by') == 'study_time' %}
+              <option value="study_time" selected>Total Study Time</option>
+              {% else %}
+              <option value="study_time">Total Study Time</option>
+              {% endif %}
+            </select>
+          </form>
+        </div>
+
+        <table
+          class="table-fixed w-full text-left text-lg lg:text-base lg:shadow-md rounded-md border border-gray-200 border-separate"
+        >
+          <thead>
+            <tr class="">
+              <th class="p-2 lg:w-96 w-1/2">Student Name</th>
+              <th class="p-2 lg:w-96 w-1/2">Study Time</th>
+              <th class="p-2 lg:grow lg:w-auto w-10 rounded-tr-md"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in class_data %}
+            <tr class="bg-white">
+              <td class="p-2">{{row[1]}}</td>
+              <td id="study_show_student_id_{{row[0]}}" class="p-2 flex row">
+                {{row[2] | timeFormat()}}
+              </td>
+              <td id="study_edit_student_id_{{row[0]}}" class="hidden">
+                <form action="/edit_study_time" method="post">
+                  <input
+                    type="text"
+                    name="new_study_time"
+                    class="bg-gray-100 border border-gray-200 rounded-md py-1 px-2 w-[5.3rem]"
+                    value="{{row[2] | timeEditFormat()}}"
+                    placeholder="00:00:00"
+                  />
+                  <input type="hidden" name="student_id" value="{{row[0]}}" />
+                  <input
+                    type="hidden"
+                    name="class_id"
+                    value="{{class_entity[0]}}"
+                  />
+                  <button
+                    type="submit"
+                    class="bg-gray-800 rounded-md p-1 text-white h-full inline relative top-[.3rem]"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="2.5"
+                      stroke="currentColor"
+                      class="size-6"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m4.5 12.75 6 6 9-13.5"
+                      />
+                    </svg>
+                  </button>
+                  <button></button>
+                </form>
+              </td>
+              <td
+                class="p-2 {% if loop.last %} rounded-br-md {% endif %} overflow-hidden"
+              >
+                <div class="flex flex-row justify-between cursor-pointer">
+                  <div onclick="actionPopup({{row[0]}})">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="size-5 lg:size-6"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"
+                      />
+                    </svg>
+                  </div>
+                  <div
+                    id="student_id_{{row[0]}}"
+                    class="lg:right-auto flex flex-col absolute right-12 z-50 ml-[1.5rem] opacity-0 transition-all border border-gray-200 duration-150 pointer-events-none bg-white p-1 rounded-md lg:shadow-md"
+                  >
+                    <div>
+                      <input type="hidden" name="delete" value="{{row[0]}}" />
+                      <input
+                        type="hidden"
+                        name="class_id"
+                        value="{{class_entity[0]}}"
+                      />
+                      <button
+                        class="flex font-semibold flex-row hover:bg-gray-100 transition-all w-full text-sm px-3 py-1"
+                        onclick="tableViewMore({{row[0]}})"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="2.5"
+                          stroke="currentColor"
+                          class="size-5 lg:size-4 top-[.1rem] relative mr-1"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                          />
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                          />
+                        </svg>
+
+                        View
+                      </button>
+                    </div>
+                    <form>
+                      <input
+                        type="hidden"
+                        name="student_id"
+                        value="{{row[0]}}"
+                      />
+                      <input
+                        type="hidden"
+                        name="class_id"
+                        value="{{class_entity[0]}}"
+                      />
+                      <button
+                        class="flex font-semibold text-sm flex-row hover:bg-gray-100 transition-all w-full px-3 py-1"
+                        type="button"
+                        onclick="toggleStudyEdit({{row[0]}})"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          stroke-width="2.5"
+                          stroke="currentColor"
+                          fill="None"
+                          class="size-5 lg:size-4 top-[.1rem] relative mr-1"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
+                          />
+                        </svg>
+
+                        Edit
+                      </button>
+                    </form>
+                    <form action="/remove_student" method="post">
+                      <input
+                        type="hidden"
+                        name="student_id"
+                        value="{{row[0]}}"
+                      />
+                      <input
+                        type="hidden"
+                        name="class_id"
+                        value="{{class_entity[0]}}"
+                      />
+                      <button
+                        class="flex font-semibold flex-row hover:bg-gray-100 transition-all w-full text-sm px-3 py-1"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          stroke-width="2.5"
+                          stroke="currentColor"
+                          fill="none"
+                          class="size-5 lg:size-4 top-[.1rem] relative mr-1"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15"
+                          />
+                        </svg>
+                        Remove
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr id="student_id_more_{{row[0]}}" class="hidden">
+              <td colspan="4" class="p-2">
+                <div class="">
+                  Total Sessions: {{session_data |
+                  sessionStats(session['user_id'], 'total')}}
+                </div>
+                <div class="">
+                  Average Session Duration: {{session_data |
+                  sessionStats(session['user_id'], 'average')}}
+                </div>
+              </td>
+            </tr>
+
+            {% endfor %}
+          </tbody>
+        </table>
+      </container>
+    </section>
+  </div>
+  <div class="flex flex-col gap-4 lg:max-w-[25rem]">
+    <container
+      class="flex flex-col gap-2 w-full border border-gray-200 rounded-md px-4 py-4 lg:shadow-md"
     >
-      <thead>
-        <tr class="bg-gray-200">
-          <th class="p-2 rounded-tl-md w-2 lg:w-12">ID</th>
-          <th class="p-2 lg:w-96 w-1/2">Student Name</th>
-          <th class="p-2 lg:w-96 w-1/2">Study Time</th>
-          <th class="p-2 lg:grow lg:w-auto w-10 rounded-tr-md"></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in class_data %}
-        <tr class="bg-white">
-          <td class="p-2 {% if loop.last %} rounded-bl-md{% endif %}">
-            {{row[0]}}
-          </td>
-          <td class="p-2">{{row[1]}}</td>
-          <td id="study_show_student_id_{{row[0]}}" class="p-2 flex flex row">
-            {{row[2] | timeFormat()}}
-          </td>
-          <td id="study_edit_student_id_{{row[0]}}" class="hidden">
-            <form action="/edit_study_time" method="post">
+      <div class="flex flex-row justify-between">
+        <div class="text-2xl font-semibold">Tasks</div>
+        <button
+          onclick="popup('task_popup')"
+          class="cursor-pointer btn-secondary px-2 py-0"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="3"
+            stroke="currentColor"
+            class="w-4 h-4 justify-center"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 4.5v15m7.5-7.5h-15"
+            />
+          </svg>
+        </button>
+      </div>
+      <div class="h-full w-full">
+        <div class="flex flex-col">
+          {% if task_data %} {% for task in task_data %}
+          <div
+            class="gap-4 cursor-pointer transition-all px-4 py-2 flex flex-row border-gray-200 hover:bg-gray-100 border-t last:border-b"
+            onclick="popup('show_task_popup', {{task[0]}})"
+            data-task
+            data-task-name="{{task[7]}}"
+            data-task-class="{{task[2]}}"
+            data-task-created="{{task[4]}}"
+            data-task-due-date="{{task[5] or ''}}"
+            data-task-status="{% if task[8] == 1 %}completed{% elif task[5] %}{% set due_status = task[5] | dueDateStatus %}{% if due_status %}{{due_status.status}}{% else %}pending{% endif %}{% else %}pending{% endif %}"
+            data-task-type="{% if task[10] %}assigned{% else %}personal{% endif %}"
+          >
+            <container class="flex flex-col w-full">
+              <div class="flex flex-row justify-between">
+                <div class="flex flex-col">
+                  <div class="text-md truncate text-nowrap w-full">
+                    {{task[7]}}
+                  </div>
+                  <div class="flex flex-row gap-2">
+                    {% if task[11] == task[10] %}
+                    <div
+                      class="rounded-md bg-green-100 text-green-600 font-semibold my-auto px-2 py-1 flex text-xs items-center mr-auto"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="size-4 my-auto mr-1"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="m4.5 12.75 6 6 9-13.5"
+                        />
+                      </svg>
+                      All Completed
+                    </div>
+                    {% elif task[11] == 0 %}
+                    <div
+                      class="rounded-md bg-red-100 text-red-500 font-semibold my-auto px-2 py-1 flex text-xs items-center mr-auto"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="size-4 my-auto mr-1"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M6 18 18 6M6 6l12 12"
+                        />
+                      </svg>
+                      0/{{task[10]}} Completed
+                    </div>
+                    {% else %}
+                    <div
+                      class="rounded-md bg-yellow-100 text-yellow-700 font-semibold my-auto px-2 py-1 flex text-xs items-center mr-auto"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="size-4 my-auto mr-1"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                        />
+                      </svg>
+                      {{task[11]}} / {{task[10]}} Completed
+                    </div>
+                    {% endif %}
+                    <div id="tags" class="flex flex-col gap-2 text-nowrap">
+                      {% if task[5] and task[8] != 1 %} {% set due_status =
+                      task[5] | dueDateStatus %} {% if due_status %} {% if
+                      due_status.status == 'overdue' %}
+                      <div
+                        class="rounded-md bg-blue-100 font-semibold my-auto px-2 py-1 flex text-xs items-center text-blue-500"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="1.5"
+                          stroke="currentColor"
+                          class="size-4 my-auto mr-1"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                          />
+                        </svg>
+                        {{due_status.text}}
+                      </div>
+                      {% elif due_status.status == 'due_today' or
+                      due_status.status == 'due_soon' %}
+                      <div
+                        class="rounded-md bg-blue-100 font-semibold my-auto px-2 py-1 flex text-xs items-center text-blue-500"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="1.5"
+                          stroke="currentColor"
+                          class="size-4 my-auto mr-1"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                          />
+                        </svg>
+                        {{due_status.text}}
+                      </div>
+
+                      {% endif %} {% endif %} {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="flex flex-row justify-between mt-1">
+                <!--DATES-->
+                <div
+                  class="flex text-xs text-gray-500 truncate text-nowrap"
+                  id="dates"
+                >
+                  <div class="">Created {{task[4] | dateTimeFormat()}}</div>
+                  {% if task[5] %}
+                  <div class="ml-1">• Due {{task[5] | dateTimeFormat()}}</div>
+                  {% endif %}
+                </div>
+                <div onclick="event.stopPropagation()">
+                  <svg
+                    onclick="popup('edit_task_popup', {{task[0]}})"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="size-5 my-auto cursor-pointer rotate-90"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </container>
+          </div>
+          {% endfor %} {% else %}
+          <div class="w-[18rem] flex">Create a task for this class</div>
+          {% endif %}
+        </div>
+      </div>
+      <div id="task_popup" class="popup" onclick="popup('task_popup')">
+        <div
+          class="popup-content w-[25rem] lg:w-[30rem]"
+          onclick="event.stopPropagation()"
+        >
+          <form action="/create_task" method="post" class="flex flex-col gap-4">
+            <div>
+              <div class="text-2xl font-semibold tracking-tight">
+                Create new task
+              </div>
+              <div class="text-sm text-gray-600 font-normal tracking-tight">
+                Set up a task to complete
+              </div>
+            </div>
+            <div class="flex flex-col">
+              <label for="class_id" class="text-xs font-semibold"
+                >Task Name</label
+              >
               <input
+                autocomplete="off"
+                name="task_description"
+                placeholder="e.g. Math Chapter 15A"
                 type="text"
-                name="new_study_time"
-                class="bg-gray-100 border border-gray-200 rounded-md py-1 px-2 w-[5.3rem]"
-                value="{{row[2] | timeEditFormat()}}"
-                placeholder="00:00:00"
+                required
               />
-              <input type="hidden" name="student_id" value="{{row[0]}}" />
-              <input
-                type="hidden"
+            </div>
+
+            <div class="flex flex-col">
+              <label for="class_id" class="text-xs font-semibold">Class</label>
+              <select
                 name="class_id"
-                value="{{class_entity[0]}}"
+                id="class_id"
+                required
+                class="block w-full border border-gray-300 rounded-md px-1 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+              >
+                <option value="{{ class_entity[0] }}">
+                  {{ class_entity[1] }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <!-- More Options Toggle -->
+              <div class="flex flex-col">
+                <button
+                  type="button"
+                  onclick="toggleMoreOptions()"
+                  class="flex items-center justify-between w-full text-left text-xs font-semibold text-gray-600 hover:text-gray-800 transition-colors duration-200"
+                >
+                  <span>More Options</span>
+                  <svg
+                    id="moreOptionsIcon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="w-4 h-4 transition-transform duration-300"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Expandable More Options Section -->
+              <div
+                id="moreOptionsSection"
+                class="overflow-hidden flex flex-col gap-4 transition-all duration-300 ease-in-out max-h-0 opacity-0"
+                style="max-height: 0"
+              >
+                <div class="flex flex-col gap-4 pt-2">
+                  <div class="flex flex-col">
+                    <label for="duration" class="text-xs font-semibold"
+                      >Estimated Time</label
+                    >
+                    <input
+                      autocomplete="off"
+                      name="duration"
+                      placeholder="e.g. 2 hours"
+                      type="text"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+                    />
+                  </div>
+
+                  <div class="flex flex-col">
+                    <label for="due_date" class="text-xs font-semibold"
+                      >Due Date</label
+                    >
+                    <input
+                      autocomplete="off"
+                      name="due_date"
+                      placeholder="e.g. 2024-12-31"
+                      type="date"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-row gap-2 mt-4">
+              <div class="btn-tertiary w-1/2" onclick="popup('task_popup')">
+                Cancel
+              </div>
+              <button type="submit" class="btn-secondary w-1/2 text-center">
+                Create Task
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% for task in task_data %}
+      <div
+        id="task_id_{{task[0]}}"
+        class="popup"
+        onclick="popup('edit_task_popup', {{task[0]}})"
+      >
+        <div
+          class="popup-content w-[25rem] lg:w-[30rem]"
+          onclick="event.stopPropagation()"
+        >
+          <form action="/edit_task" method="post" class="flex flex-col gap-4">
+            <input type="hidden" name="task_id" value="{{task[0]}}" />
+            <div>
+              <div class="text-2xl font-semibold tracking-tight">Edit task</div>
+              <div class="text-sm text-gray-600 font-normal tracking-tight">
+                Make changes to a task
+              </div>
+            </div>
+            <div class="flex flex-col">
+              <label
+                for="task_description_{{task[0]}}"
+                class="text-xs font-semibold"
+                >Task Name</label
+              >
+              <input
+                autocomplete="off"
+                name="task_description"
+                id="task_description_{{task[0]}}"
+                value="{{task[7]}}"
+                placeholder="e.g. Math Chapter 15A"
+                type="text"
+                required
               />
-              <button
-                type="submit"
-                class="bg-gray-800 rounded-md p-1 text-white h-full inline relative top-[.3rem]"
+            </div>
+
+            <div class="flex flex-col">
+              <label for="class_id_{{task[0]}}" class="text-xs font-semibold"
+                >Class</label
+              >
+              <select
+                name="class_id"
+                id="class_id_{{task[0]}}"
+                required
+                class="block w-full border border-gray-300 rounded-md px-1 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+              >
+                {% for class in class_data %} {% if class[0] == task[1] %}
+                <option value="{{ class[0] }}" selected>{{ class[1] }}</option>
+                {% else %}
+                <option value="{{ class[0] }}">{{ class[1] }}</option>
+                {% endif %} {% endfor %}
+              </select>
+            </div>
+
+            <div class="flex flex-col gap-4 pt-2">
+              <div class="flex flex-col">
+                <label for="duration_{{task[0]}}" class="text-xs font-semibold"
+                  >Estimated Time (optional)</label
+                >
+                <input
+                  autocomplete="off"
+                  name="duration"
+                  id="duration_{{task[0]}}"
+                  placeholder="e.g. 2 hours"
+                  type="text"
+                  value="{{task[6] or ''}}"
+                  class="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+                />
+              </div>
+
+              <div class="flex flex-col">
+                <label for="due_date_{{task[0]}}" class="text-xs font-semibold"
+                  >Due Date (optional)</label
+                >
+                <input
+                  autocomplete="off"
+                  name="due_date"
+                  id="due_date_{{task[0]}}"
+                  placeholder="e.g. 2024-12-31"
+                  type="date"
+                  value="{{task[5] or ''}}"
+                  class="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+                />
+              </div>
+            </div>
+
+            <div class="flex flex-row gap-2 mt-4">
+              <a
+                href="#"
+                class="btn-danger p-2 font-semibold rounded-md cursor-pointer w-1/2 justify-center flex"
+                onclick="deleteTask({{task[0]}})"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
-                  stroke-width="2.5"
+                  stroke-width="1.5"
                   stroke="currentColor"
-                  class="size-6"
+                  class="size-5 my-auto mr-1"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                  />
+                </svg>
+                Delete
+              </a>
+              <button
+                type="submit"
+                class="btn-secondary w-1/2 justify-center flex"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="size-5 my-auto mr-1"
                 >
                   <path
                     stroke-linecap="round"
@@ -148,303 +773,366 @@
                     d="m4.5 12.75 6 6 9-13.5"
                   />
                 </svg>
+                <span class="mr-2">Update Task</span>
               </button>
-              <button></button>
-            </form>
-          </td>
-          <td
-            class="p-2 {% if loop.last %} rounded-br-md {% endif %} overflow-hidden"
-          >
-            <div class="flex flex-row justify-between cursor-pointer">
-              <div onclick="actionPopup({{row[0]}})">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="size-5 lg:size-6"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"
-                  />
-                </svg>
-              </div>
-              <div
-                id="student_id_{{row[0]}}"
-                class="lg:right-auto flex flex-col absolute right-12 z-50 ml-[1.5rem] opacity-0 transition-all border border-gray-100 duration-150 pointer-events-none bg-white p-1 rounded-md lg:shadow-md"
-              >
-                <div>
-                  <input type="hidden" name="delete" value="{{row[0]}}" />
-                  <input
-                    type="hidden"
-                    name="class_id"
-                    value="{{class_entity[0]}}"
-                  />
-                  <button
-                    class="flex font-bold flex-row hover:bg-gray-100 transition-all w-full text-sm px-3 py-1"
-                    onclick="tableViewMore({{row[0]}})"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="2.5"
-                      stroke="currentColor"
-                      class="size-5 lg:size-4 top-[.1rem] relative mr-1"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
-                      />
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                      />
-                    </svg>
-
-                    View
-                  </button>
-                </div>
-                <form>
-                  <input type="hidden" name="student_id" value="{{row[0]}}" />
-                  <input
-                    type="hidden"
-                    name="class_id"
-                    value="{{class_entity[0]}}"
-                  />
-                  <button
-                    class="flex font-bold text-sm flex-row hover:bg-gray-100 transition-all w-full px-3 py-1"
-                    type="button"
-                    onclick="toggleStudyEdit({{row[0]}})"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      stroke-width="2.5"
-                      stroke="currentColor"
-                      fill="None"
-                      class="size-5 lg:size-4 top-[.1rem] relative mr-1"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
-                      />
-                    </svg>
-
-                    Edit
-                  </button>
-                </form>
-                <form action="/remove_student" method="post">
-                  <input type="hidden" name="student_id" value="{{row[0]}}" />
-                  <input
-                    type="hidden"
-                    name="class_id"
-                    value="{{class_entity[0]}}"
-                  />
-                  <button
-                    class="flex font-bold flex-row hover:bg-gray-100 transition-all w-full text-sm px-3 py-1"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      stroke-width="2.5"
-                      stroke="currentColor"
-                      fill="none"
-                      class="size-5 lg:size-4 top-[.1rem] relative mr-1"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15"
-                      />
-                    </svg>
-                    Remove
-                  </button>
-                </form>
-              </div>
             </div>
-          </td>
-        </tr>
-        <tr id="student_id_more_{{row[0]}}" class="hidden">
-          <td colspan="4" class="p-2">
-            <div class="">Total Sessions: {{session_data | sessionStats(session['user_id'], 'total')}}</div>
-            <div class="">Average Session Duration: {{session_data | sessionStats(session['user_id'], 'average')}}</div>
-          </td>
-        </tr>
-
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
-  <div class="flex flex-col gap-2 w-full lg:w-[24rem]">
-    <div class="text-3xl font-bold">Sessions</div>
-    {% for session in session_data %}
-    <form action="/update_session" method="post">
-      <input type="hidden" name="session_id" value="{{session[0]}}" />
-      <input type="hidden" name="class_id" value="{{session[1]}}" />
-      <input type="hidden" name="student_id" value="{{session[2]}}" />
+          </form>
+        </div>
+      </div>
       <div
-        class="bg-white border border-gray-100 rounded-md px-4 py-4 flex flex-col lg:shadow-md"
+        id="show_task_id_{{task[0]}}"
+        class="popup"
+        onclick="popup('show_task_popup', {{task[0]}})"
       >
-        <div class="flex flex-row justify-between justify-start">
-          <div class="text-xl font-bold">{{session[2] | getStudentName}}</div>
-          <div
-            id="study_show_session_id_{{session[0]}}"
-            class="text-xl font-bold"
-          >
-            {{ session[3] | duration(session[4]) }}
-          </div>
-          <div
-            id="study_edit_session_id_{{session[0]}}"
-            class="hidden flex flex-row"
-          >
-            <input
-              class="text-xl font-bold bg-gray-100 rounded-md p-1 w-[6.2rem] border border-gray-200"
-              value="{{ (session[3] | duration(session[4], 'seconds')) | timeEditFormat }}"
-              name="new_session_duration"
-              placeholder="00:00:00"
-            />
-            <input
-              type="hidden"
-              name="duration"
-              value="{{ session[3] | duration(session[4], 'seconds') }}"
-            />
-          </div>
-        </div>
         <div
-          class="text-md text-gray-800 overflow-x-hidden text-ellipsis"
-          id="study_show_session_id_{{session[0]}}"
+          class="popup-content w-[25rem] lg:w-[30rem]"
+          onclick="event.stopPropagation()"
         >
-          {{session[5]}}
-        </div>
-        <div id="study_edit_session_id_{{session[0]}}" class="flex-col hidden">
-          <input
-            class="bg-gray-100 rounded-md p-2 my-1 w-full border border-gray-200"
-            value="{{session[5]}}"
-            name="session_description"
-          />
-          <div class="flex flex-row gap-1">
-            <div
-              class="bg-gray-200 rounded-md p-2 font-bold grow cursor-pointer text-center"
-              onclick="toggleStudyEdit({{session[0]}}, 'session')"
-            >
-              Cancel
-            </div>
-            <button
-              class="bg-gray-800 rounded-md p-1 text-white font-bold grow"
-            >
-              Save
-            </button>
-          </div>
-        </div>
+          <div class="text-2xl font-semibold">Task Completion</div>
+          <div class="w-full grid grid-cols-2 mt-4">
+            <div class="font-semibold border-b w-full">Student</div>
+            <div class="font-semibold border-b w-full">Status</div>
 
-        <div
-          class="flex flex-row justify-between"
-          id="study_show_session_id_{{session[0]}}"
-        >
-          <div class="text-sm text-gray-500">
-            {{session[3] | dateTimeFormat()}}
-          </div>
-          <div class="flex flex-row justify-between cursor-pointer">
-            <div onclick="actionPopup({{session[0]}}, 'session')">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="size-5 lg:size-6"
+            {% for student_id in task[8] | getAllStudentIds(task[9]) %} {% set
+            status = student_id | getStudentStatus(task[8], task[9]) %}
+            <div class="w-full truncate text-nowrap">
+              {{student_id | getStudentName}}
+            </div>
+            <div class="mr-auto">
+              {% if status == 'incomplete' %}
+              <div
+                class="py-1 px-2 bg-red-100 text-red-500 rounded-md text-xs my-0.5 font-semibold"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
-                />
-              </svg>
+                Incomplete
+              </div>
+              {% else %}
+              <div
+                class="py-1 px-2 bg-green-100 text-green-600 rounded-md text-xs my-0.5 font-semibold"
+              >
+                Complete
+              </div>
+              {% endif %}
             </div>
-            <div
-              id="session_id_{{session[0]}}"
-              class="flex flex-col absolute border border-gray-100 lg:right-auto right-14 z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md lg:shadow-md"
-            >
-              <form>
-                <input type="hidden" name="session_id" value="{{session[0]}}" />
-                <input type="hidden" name="class_id" value="{{session[1]}}" />
-                <input type="hidden" name="student_id" value="{{session[2]}}" />
-                <button
-                  class="flex font-bold text-sm flex-row hover:bg-gray-100 transition-all w-full px-3 py-1"
-                  type="button"
-                  onclick="toggleStudyEdit({{session[0]}}, 'session')"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    stroke-width="2.5"
-                    stroke="currentColor"
-                    fill="None"
-                    class="size-5 lg:size-4 top-[.1rem] relative mr-1"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
-                    />
-                  </svg>
-
-                  Edit
-                </button>
-              </form>
-              <form action="/delete_session" method="post">
-                <input type="hidden" name="session_id" value="{{session[0]}}" />
-                <input type="hidden" name="class_id" value="{{session[1]}}" />
-                <input type="hidden" name="student_id" value="{{session[2]}}" />
-                <button
-                  class="flex font-bold flex-row hover:bg-gray-100 transition-all w-full text-sm px-3 py-1"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="2.5"
-                    stroke="currentColor"
-                    class="size-5 lg:size-4 top-[.1rem] relative mr-1"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                    />
-                  </svg>
-
-                  Delete
-                </button>
-              </form>
-            </div>
+            {% endfor %}
           </div>
         </div>
       </div>
-    </form>
-    {% endfor %}
+      {% endfor %}
+      <div id="task_popup" class="popup" onclick="popup('task_popup')">
+        <div
+          class="popup-content w-[25rem] lg:w-[30rem]"
+          onclick="event.stopPropagation()"
+        >
+          <form action="/create_task" method="post" class="flex flex-col gap-4">
+            <div>
+              <div class="text-2xl font-semibold tracking-tight">
+                Create new task
+              </div>
+              <div class="text-sm text-gray-600 font-normal tracking-tight">
+                Set up a task to complete
+              </div>
+            </div>
+            <div class="flex flex-col">
+              <label for="class_id" class="text-xs font-semibold"
+                >Task Name</label
+              >
+              <input
+                autocomplete="off"
+                name="task_description"
+                placeholder="e.g. Math Chapter 15A"
+                type="text"
+                required
+              />
+            </div>
+
+            <div class="flex flex-col">
+              <label for="class_id" class="text-xs font-semibold">Class</label>
+              <select
+                name="class_id"
+                id="class_id"
+                required
+                class="block w-full border border-gray-300 rounded-md px-1 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+              >
+                <option value="" disabled selected>Select a class</option>
+                {% for class in class_data %}
+
+                <option value="{{ class[0] }}">{{ class[1] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <!-- More Options Toggle -->
+              <div class="flex flex-col">
+                <button
+                  type="button"
+                  onclick="toggleMoreOptions()"
+                  class="flex items-center justify-between w-full text-left text-xs font-semibold text-gray-600 hover:text-gray-800 transition-colors duration-200"
+                >
+                  <span>More Options</span>
+                  <svg
+                    id="moreOptionsIcon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="w-4 h-4 transition-transform duration-300"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Expandable More Options Section -->
+              <div
+                id="moreOptionsSection"
+                class="overflow-hidden flex flex-col gap-4 transition-all duration-300 ease-in-out max-h-0 opacity-0"
+                style="max-height: 0"
+              >
+                <div class="flex flex-col gap-4 pt-2">
+                  <div class="flex flex-col">
+                    <label for="duration" class="text-xs font-semibold"
+                      >Estimated Time</label
+                    >
+                    <input
+                      autocomplete="off"
+                      name="duration"
+                      placeholder="e.g. 2 hours"
+                      type="text"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+                    />
+                  </div>
+
+                  <div class="flex flex-col">
+                    <label for="due_date" class="text-xs font-semibold"
+                      >Due Date</label
+                    >
+                    <input
+                      autocomplete="off"
+                      name="due_date"
+                      placeholder="e.g. 2024-12-31"
+                      type="date"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-row gap-2 mt-4">
+              <div class="btn-tertiary w-1/2" onclick="popup('task_popup')">
+                Cancel
+              </div>
+              <button type="submit" class="btn-secondary w-1/2 text-center">
+                Create Task
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </container>
+    <container
+      class="flex flex-col gap-2 w-full bg-white border border-gray-200 rounded-md p-4 lg:shadow-md"
+    >
+      <div class="text-2xl font-semibold">Sessions</div>
+      <div class="flex flex-col">
+        {% for session in session_data %}
+        <div class="px-4 py-2 border-t last:border-b border-gray-200">
+          <form action="/update_session" method="post">
+            <input type="hidden" name="session_id" value="{{session[0]}}" />
+            <input type="hidden" name="class_id" value="{{session[1]}}" />
+            <input type="hidden" name="student_id" value="{{session[2]}}" />
+            <div class="flex flex-col">
+              <div class="flex flex-row justify-between">
+                <div class="text-md font-semibold">
+                  {{session[2] | getStudentName}}
+                </div>
+                <div
+                  id="study_show_session_id_{{session[0]}}"
+                  class="text-md font-semibold"
+                >
+                  {{ session[3] | duration(session[4]) }}
+                </div>
+                <div
+                  id="study_edit_session_id_{{session[0]}}"
+                  class="hidden flex-row"
+                >
+                  <input
+                    class="text-md font-semibold bg-gray-100 rounded-md p-1 w-[6.2rem] border border-gray-200"
+                    value="{{ (session[3] | duration(session[4], 'seconds')) | timeEditFormat }}"
+                    name="new_session_duration"
+                    placeholder="00:00:00"
+                  />
+                  <input
+                    type="hidden"
+                    name="duration"
+                    value="{{ session[3] | duration(session[4], 'seconds') }}"
+                  />
+                </div>
+              </div>
+              <div
+                class="text-sm italic text-gray-500 overflow-x-hidden text-ellipsis"
+                id="study_show_session_id_{{session[0]}}"
+              >
+                "{{session[5]}}"
+              </div>
+              <div
+                id="study_edit_session_id_{{session[0]}}"
+                class="flex-col hidden"
+              >
+                <input
+                  class="bg-gray-100 rounded-md p-2 my-1 w-full border border-gray-200"
+                  value="{{session[5]}}"
+                  name="session_description"
+                />
+                <div class="flex flex-row gap-1">
+                  <div
+                    class="bg-gray-200 rounded-md p-2 font-semibold grow cursor-pointer text-center"
+                    onclick="toggleStudyEdit({{session[0]}}, 'session')"
+                  >
+                    Cancel
+                  </div>
+                  <button
+                    class="bg-gray-800 rounded-md p-1 text-white font-semibold grow"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+
+              <div
+                class="flex flex-row justify-between"
+                id="study_show_session_id_{{session[0]}}"
+              >
+                <div class="text-xs text-gray-500">
+                  {{session[3] | dateTimeFormat()}}
+                </div>
+                <div class="flex flex-row justify-between cursor-pointer">
+                  <div onclick="actionPopup({{session[0]}}, 'session')">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="size-5 rotate-90"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"
+                      />
+                    </svg>
+                  </div>
+                  <div
+                    id="session_id_{{session[0]}}"
+                    class="flex flex-col absolute border border-gray-200 lg:right-auto right-14 z-50 ml-[1.5rem] opacity-0 transition-all duration-150 pointer-events-none bg-white p-1 rounded-md lg:shadow-md"
+                  >
+                    <form>
+                      <input
+                        type="hidden"
+                        name="session_id"
+                        value="{{session[0]}}"
+                      />
+                      <input
+                        type="hidden"
+                        name="class_id"
+                        value="{{session[1]}}"
+                      />
+                      <input
+                        type="hidden"
+                        name="student_id"
+                        value="{{session[2]}}"
+                      />
+                      <button
+                        class="flex font-semibold text-sm flex-row hover:bg-gray-100 transition-all w-full px-3 py-1"
+                        type="button"
+                        onclick="toggleStudyEdit({{session[0]}}, 'session')"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          stroke-width="2.5"
+                          stroke="currentColor"
+                          fill="None"
+                          class="size-5 lg:size-4 top-[.1rem] relative mr-1"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
+                          />
+                        </svg>
+
+                        Edit
+                      </button>
+                    </form>
+                    <form action="/delete_session" method="post">
+                      <input
+                        type="hidden"
+                        name="session_id"
+                        value="{{session[0]}}"
+                      />
+                      <input
+                        type="hidden"
+                        name="class_id"
+                        value="{{session[1]}}"
+                      />
+                      <input
+                        type="hidden"
+                        name="student_id"
+                        value="{{session[2]}}"
+                      />
+                      <button
+                        class="flex font-semibold flex-row hover:bg-gray-100 transition-all w-full text-sm px-3 py-1"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="2.5"
+                          stroke="currentColor"
+                          class="size-5 lg:size-4 top-[.1rem] relative mr-1"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                          />
+                        </svg>
+
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </container>
   </div>
 </div>
 
 {% else %}
 <div class="w-full h-full flex items-center flex-col my-24">
-  <div class="text-4xl font-bold mb-12">Add some students to your class!</div>
-  <div class="text-3xl">Your class code is:</div>
+  <div class="text-4xl font-semibold mb-12">
+    Add some students to your class!
+  </div>
+  <div class="text-2xl my-2">Your class code is:</div>
   <div class="flex flex-row gap-2">
-    <div class="text-4xl font-bold bg-gray-200 p-2 rounded-md">
+    <div class="text-4xl font-semibold bg-gray-200 p-2 rounded-md">
       {{join_code}}
     </div>
     <a
       href="{{ url_for('view_class', class_id=class_entity[0])}}"
-      class="text-4xl font-bold bg-gray-800 p-2 rounded-md text-white cursor-pointer"
+      class="text-4xl font-semibold bg-gray-800 p-2 rounded-md text-white cursor-pointer"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -476,7 +1164,7 @@
 {% endif %}
 <div
   id="invite_popup"
-  class="opacity-0 transition-all fixed inset-0 bg-opacity-50 bg-black w-full h-full pointer-events-none flex justify-center scale-110"
+  class="z-50 opacity-0 transition-all fixed inset-0 bg-opacity-50 bg-black w-full h-full pointer-events-none flex justify-center scale-110"
   onclick="invitePopup()"
 >
   <div
@@ -484,10 +1172,12 @@
     onclick="event.stopPropagation()"
   >
     <form action="/invite_student" method="post">
-      <div class="text-2xl font-bold">Invite a student</div>
-      <div class="">Add a student by username to your class</div>
+      <div class="text-2xl font-semibold">Invite a student</div>
+      <div class="text-sm text-gray-500">
+        Add a student by username to your class
+      </div>
       <input
-        class="bg-gray-100 p-2 rounded-md w-full my-6"
+        class="w-full my-6"
         autocomplete="off"
         name="student_username"
         placeholder="Student username"
@@ -496,14 +1186,14 @@
       <input value="{{class_entity[0]}}" name="class_id" type="hidden" />
       <div class="flex flex-row gap-2">
         <div
-          class="bg-gray-200 p-2 font-bold rounded-md cursor-pointer w-1/2 text-center"
+          class="bg-gray-200 p-2 font-semibold rounded-md cursor-pointer w-1/2 text-center"
           onclick="invitePopup()"
         >
           Cancel
         </div>
         <button
           type="submit"
-          class="bg-gray-800 p-2 font-bold text-white rounded-md w-1/2 text-center"
+          class="bg-gray-800 p-2 font-semibold text-white rounded-md w-1/2 text-center"
         >
           Invite
         </button>
@@ -538,13 +1228,15 @@
       </svg>
     </div>
     <div
-      class="align-middle text-center font-bold mx-auto my-auto flex flex-col gap-8"
+      class="align-middle text-center font-semibold mx-auto my-auto flex flex-col gap-8"
     >
-      <div class="text-5xl font-bold text-center">
+      <div class="text-5xl font-semibold text-center">
         Join your teacher's class by entering the pin!
       </div>
 
-      <div class="bg-gray-200 rounded-lg p-4 text-8xl lg:text-[10rem] mx-auto mb-48 lg:mb-36">
+      <div
+        class="bg-gray-200 rounded-lg p-4 text-8xl lg:text-[10rem] mx-auto mb-48 lg:mb-36"
+      >
         {{join_code}}
       </div>
       <div class="lg:hidden block text-lg font-normal text-gray-500">
@@ -566,6 +1258,40 @@
     } else {
       popup.classList.add("opacity-0", "pointer-events-none", "scale-110");
       popup.classList.remove("opacity-100", "scale-100");
+    }
+  }
+  function popup(popup_id, task_id) {
+    let popup;
+    if (popup_id == "edit_task_popup") {
+      popup = document.getElementById(`task_id_${task_id}`);
+    } else if (popup_id == "show_task_popup") {
+      popup = document.getElementById(`show_task_id_${task_id}`);
+    } else {
+      popup = document.getElementById(popup_id);
+    }
+
+    if (popup.classList.contains("active")) {
+      popup.classList.remove("active");
+      if (popup_id == "edit_task_popup") {
+        toggleClassLink(false);
+      }
+    } else {
+      popup.classList.add("active");
+      if (popup_id == "edit_task_popup") {
+        toggleClassLink(true);
+      }
+    }
+
+    function toggleClassLink(popup) {
+      const a = document.querySelectorAll(".task_link");
+      a.forEach((el) => {
+        let originalUrl = el.getAttribute("data-original-url");
+        if (popup) {
+          el.setAttribute("href", "#");
+        } else {
+          el.setAttribute("href", originalUrl);
+        }
+      });
     }
   }
   function tableViewMore(student_id) {
@@ -645,6 +1371,185 @@
       popup.classList.remove("opacity-100");
     }
   }
+
+  // Time formatting function (replicating your Flask filter)
+  function formatTime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    if (hours >= 1) {
+      return `${hours}h ${minutes}m`;
+    } else {
+      return `${minutes}m`;
+    }
+  }
+
+  function toggleMoreOptions() {
+    const section = document.getElementById("moreOptionsSection");
+    const icon = document.getElementById("moreOptionsIcon");
+
+    if (section.style.maxHeight === "0px" || section.style.maxHeight === "") {
+      // Expand
+      section.style.maxHeight = section.scrollHeight + "px";
+      section.classList.remove("opacity-0");
+      section.classList.add("opacity-100");
+      icon.style.transform = "rotate(-90deg)";
+    } else {
+      // Collapse
+      section.style.maxHeight = "0px";
+      section.classList.remove("opacity-100");
+      section.classList.add("opacity-0");
+      icon.style.transform = "rotate(0deg)";
+    }
+  }
+  function deleteTask(task_id) {
+    const formData = new FormData();
+    formData.append("task_id", task_id);
+
+    fetch("/delete_task", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => {
+        if (response.ok) {
+          location.reload();
+        } else {
+          console.error("Failed to delete task");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+
+
+  // External tooltip handler for bar chart
+  function externalBarTooltipHandler(context) {
+    const { chart, tooltip } = context;
+    const tooltipEl = document.getElementById('chartTooltip');
+
+    if (tooltip.opacity === 0) {
+      tooltipEl.style.opacity = 0;
+      return;
+    }
+
+    // Set tooltip content
+    if (tooltip.body) {
+      const titleLines = tooltip.title || [];
+      const bodyLines = tooltip.body.map(b => b.lines);
+
+      const labelEl = document.getElementById('tooltipLabel');
+      const valueEl = document.getElementById('tooltipValue');
+
+      // Get the student name from the title
+      labelEl.textContent = titleLines[0] || '';
+
+      // Get the raw value from the chart data
+      if (tooltip.dataPoints && tooltip.dataPoints.length > 0) {
+        const dataPoint = tooltip.dataPoints[0];
+        const rawValue = dataPoint.raw; // This gets the actual seconds value
+        valueEl.textContent = `Study Time: ${formatTime(rawValue)}`;
+      }
+    }
+
+    const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
+
+    // Position tooltip with smooth transition
+    tooltipEl.style.left = positionX + tooltip.caretX + 'px';
+    tooltipEl.style.top = positionY + tooltip.caretY - 10 + 'px';
+
+    // Smooth fade in
+    setTimeout(() => {
+      tooltipEl.style.opacity = 1;
+    }, 10);
+  }
+
+  // Initialize Chart.js bar chart
+  {% if class_data %}
+  document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('studyTimeChart').getContext('2d');
+
+    const studentNames = [{% for row in class_data %}'{{ row[1] }}'{% if not loop.last %}, {% endif %}{% endfor %}];
+    const studyTimes = [{% for row in class_data %}{{ row[2] }}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: studentNames,
+        datasets: [{
+          label: 'Study Time',
+          data: studyTimes,
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          borderColor: 'rgb(59, 130, 246)',
+          borderWidth: 3,
+          borderRadius: 8,
+          borderSkipped: false,
+          hoverBackgroundColor: 'rgba(59, 130, 246, 0.4)',
+          hoverBorderColor: 'rgb(37, 99, 235)',
+          hoverBorderWidth: 3,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+          duration: 800,
+          easing: 'easeOutQuart'
+        },
+        hover: {
+          animationDuration: 200
+        },
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            enabled: false,
+            external: externalBarTooltipHandler
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            display: false,
+            ticks: {
+              callback: function(value) {
+              return formatTime(value);
+              },
+              color: '#6B7280',
+              font: {
+              size: 12
+              }
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: '#6B7280',
+              font: {
+                size: 12
+              }
+            }
+          }
+        },
+        elements: {
+          bar: {
+            borderRadius: 8
+          }
+        }
+      }
+    });
+  });
+  {% endif %}
 </script>
-<!---->
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 {% endblock %}

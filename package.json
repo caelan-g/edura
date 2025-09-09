@@ -1,0 +1,20 @@
+{
+  "name": "study-app",
+  "version": "1.0.0",
+  "description": "Flask study app with Tailwind CSS",
+  "main": "app.py",
+  "scripts": {
+    "build-css": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.css --watch",
+    "build-css-prod": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.css --minify"
+  },
+  "keywords": [
+    "flask",
+    "tailwind",
+    "study-app"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}
