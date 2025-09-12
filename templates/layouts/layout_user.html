@@ -27,7 +27,9 @@
     />
     <title>Edura</title>
   </head>
-  <body class="flex flex-col lg:flex-row lg:bg-neutral-0">
+  <body
+    class="flex flex-col lg:flex-row lg:bg-neutral-0 overflow-x-hidden w-screen"
+  >
     <nav class="py-2 lg:h-full w-full lg:w-auto fixed z-10 bg-white">
       <div
         class="z-10 lg:ml-2 px-4 lg:px-2 flex flex-row justify-between lg:justify-normal lg:flex-col align-middle lg:grow lg:w-48 lg:pt-6 lg:gap-10 w-full top-0 lg:h-full lg:rounded-md lg:shadow-md border-gray-200 border-b lg:border"
@@ -36,7 +38,7 @@
           href="/dashboard"
           class="px-1 flex-row gap-1 {% if session['user_type'] == 'student' %} hidden {% else %} block {% endif %} lg:flex"
         >
-          <div class="logo tracking-tighter text-xl lg:ml-4 mt-1">Edura</div>
+          <div class="logo tracking-tighter text-2xl mt-1">Edura</div>
         </a>
         <div
           class="grow flex flex-row lg:flex-col gap-2 text-sm {% if session['user_type'] == 'student' %} w-full {% else %} ml-auto text-right {% endif %} lg:ml-0 lg:text-left"

@@ -2,21 +2,14 @@ from datetime import datetime, timedelta
 import sqlite3
 from flask import Flask, render_template, request, redirect, session, flash, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
-from dotenv import load_dotenv
 import os
 import random
 import math
-from bokeh.plotting import figure
-from bokeh.embed import components
-from bokeh.io import show
-from bokeh.models import AnnularWedge, ColumnDataSource, Legend, LegendItem, Plot, Range1d, LabelSet
-from bokeh.resources import INLINE
 import logging
 import uuid
 import re
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from math import pi
 import pyotp
 import qrcode   
 import bleach
@@ -303,34 +296,6 @@ def get_class(class_id):
     conn.close()
     return class_entity
     
-
-def render_bar_graph(name_list, data, colour_data):
-    formatted_time = []
-    for i in data:
-        formatted_time.append(time_filter_filter(i))
-    source = ColumnDataSource(data=dict(x=name_list, y=data, formatted_time=formatted_time))  # Store data in ColumnDataSource
-
-    plot = figure(x_range=name_list, toolbar_location=None, sizing_mode="stretch_both", tools="")
-
-    if colour_data == 'monochrome':
-        plot.vbar(x=name_list, top=data, line_width=0, width=0.9, fill_color="rgb(59, 130, 246)", border_radius=8)
-    else:
-        plot.vbar(x=name_list, top=data, line_width=0, width=0.9, fill_color=colour_data, border_radius=8)
-
-    labels = LabelSet(x='x', y='y', text='formatted_time', level='glyph', x_offset=-10, y_offset=5, source=source, text_font_style="bold")
-    plot.add_layout(labels)
-    plot.background_fill_color = None
-    plot.border_fill_color = None
-    plot.y_range.start = 0
-    plot.y_range.end = max(data) * 1.1
-    plot.outline_line_color = None
-    plot.yaxis.visible = False
-    plot.xgrid.grid_line_color = None
-    plot.ygrid.grid_line_alpha = 0.5
-    plot.ygrid.grid_line_dash = [6, 4]
-
-    return components(plot)
-
 def clear_mfa(id):
     conn = sqlite3.connect('study_app.db')
     cursor = conn.cursor()
@@ -480,35 +445,11 @@ def get_daily_totals(cursor, user_id, days):
     return output
 
 
-#log = logging.getLogger("werkzeug")
-#log.setLevel(logging.ERROR)
-#logging.basicConfig(filename='record.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
+log = logging.getLogger("werkzeug")
+log.setLevel(logging.ERROR)
+logging.basicConfig(filename='record.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 limiter = Limiter(get_remote_address, app=app, default_limits=["200 per minute"])
 init_db()
-
-@app.route('/generate_test_data')
-def generate_test_data():
-    """One-time route to generate test data for the current user"""
-    if verify():
-        conn = sqlite3.connect('study_app.db')
-        cursor = conn.cursor()
-        
-        # Check if user already has sessions to avoid duplicates
-        cursor.execute("SELECT COUNT(*) FROM study_sessions WHERE student_id = ?", (session['user_id'],))
-        existing_sessions = cursor.fetchone()[0]
-        
-        if existing_sessions > 0:
-            flash(f'User already has {existing_sessions} study sessions. Test data not generated.', 'info')
-        else:
-            random_month_sessions(cursor, session['user_id'])
-            conn.commit()
-            flash('Test data generated successfully!', 'success')
-        
-        conn.close()
-        return redirect('/dashboard')
-    else:
-        flash('Please login to continue', 'error')
-        return redirect('/login')
 
 @app.before_request
 def make_session_permanent():
@@ -687,6 +628,32 @@ def due_date_status_filter(due_date):
 @app.route('/')
 def index():
     return render_template("index.html")
+
+
+@app.route('/generate_test_data')
+def generate_test_data():
+    """One-time route to generate test data for the current user"""
+    if verify():
+        conn = sqlite3.connect('study_app.db')
+        cursor = conn.cursor()
+        
+        # Check if user already has sessions to avoid duplicates
+        cursor.execute("SELECT COUNT(*) FROM study_sessions WHERE student_id = ?", (session['user_id'],))
+        existing_sessions = cursor.fetchone()[0]
+        
+        if existing_sessions > 0:
+            flash(f'User already has {existing_sessions} study sessions. Test data not generated.', 'info')
+        else:
+            random_month_sessions(cursor, session['user_id'])
+            conn.commit()
+            flash('Test data generated successfully!', 'success')
+        
+        conn.close()
+        return redirect('/dashboard')
+    else:
+        flash('Please login to continue', 'error')
+        return redirect('/login')
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -1486,7 +1453,7 @@ def page_not_found(e):
 def handle_exception(e):
     flash("An unexpected error occurred. Please try again later.", 'error')
     if session.get('user_id'):
-        return redirect(f'/{session['page']}')
+        return redirect(f"/{session['page']}")
     else:
         return redirect('/')
     
@@ -1574,7 +1541,7 @@ def create_task():
 
     else:
         
-        if session['user_type'] == 'teacher' and verify('teacher'): 
+        if verify('teacher'): 
             teacher_id = session['user_id']
             conn = sqlite3.connect('study_app.db')
             cursor = conn.cursor()
@@ -1778,7 +1745,7 @@ def complete_task():
             flash('You can only complete your own tasks', 'error')
         
         conn.close()
-        return redirect(f'/{session["page"]}')
+        return redirect(f"/{session['page']}")
     
     else:
         flash('Please login to continue', 'error')

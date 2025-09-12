@@ -17,6 +17,8 @@ coverage/
 htmlcov/
 .cache/
 
+node_modules/
+
 # Flask-specific
 *.db
 *.sqlite3

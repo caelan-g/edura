@@ -3,8 +3,11 @@
   <div
     class="font-semibold tracking-tight flex flex-row w-full align-middle justify-between mb-2 mt-16 lg:mt-0"
   >
+    {% if session['user_type'] == 'student' %}
     <div class="my-auto text-2xl align-middle">My Tasks</div>
-
+    {% else %}
+    <div class="my-auto text-2xl align-middle">Assigned Tasks</div>
+    {% endif %}
     <button
       onclick="popup('task_popup')"
       class="btn-secondary flex flex-row relative text-md cursor-pointer lg:px-4 px-2"
@@ -27,7 +30,7 @@
     </button>
   </div>
   <div class="lg:flex gap-2 h-full">
-    <section class="lg:min-w-[45rem]">
+    <section class="lg:min-w-[45rem] lg:w-full">
       {% if session['user_type'] == 'teacher' %}
 
       <div class="h-full w-full">
@@ -1141,7 +1144,7 @@
     </section>
     <section class="hidden lg:block w-full sticky top-12 h-full">
       <div
-        class="w-full rounded-md border-gray-200 border lg:shadow-md bg-white"
+        class="w-full rounded-md border-gray-200 border lg:shadow-md bg-white max-w-[30rem]"
       >
         <div class="flex items-center justify-between px-4 pt-4">
           <div>
